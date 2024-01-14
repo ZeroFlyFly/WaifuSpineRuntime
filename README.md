@@ -21,7 +21,10 @@ Including:
 2. To Avoid Texture alpha looks weird, go to **Edit**->**Preference**->**Spine** in menu and set the Spine Editor Settings to the picture bellow.
    (Just Use **Straight Alpha Preset**)
 
-    **Tips:**
+![Transparent_Settings](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Transparent_Settings.jpg)
+
+
+    Tips:
     
       if you have no idea why the second step makes alpha looks good.
       
@@ -32,21 +35,29 @@ Including:
 1. For this feature, just drag the relate **Atlas** **Texture** and **Skeleton** file into Unity. It should decode them correctly.
 
   For example:
-* Arknights-> **Spine 3.5**
-* Princess Connect Re:Dive -> **Spine 3.6**
-* AzureLane -> **Spine 3.8**
+* Arknights-> **Spine 3.5** (int latest, it has changed to 3.8)
+* Princess Connect! Re:Dive -> **Spine 3.6**
+* Azurlane -> **Spine 3.8**
 * Blue Archive -> **Spine 3.8**
 * Genshin Impact -> **Spine 4.0+**
+
+![Feature_1_Example](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Feature_1_Example.jpg)
 
 ## Extract Mihoyo / Hoyoverse Website Spine
 1. For this feature,  Go to **ZeroFly** in menu. Click the **Read Vendors Content**, it should open up a new window, drag it to wherever you want.
 
+![Read_Content](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Read_Content.jpg)
+
 2. Enter the website url, make sure it is accesable through browser.
+
+![Read_Content_UI](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Read_Content_UI.jpg)
 
     **Tips:** You can use this link as an example :https://act.mihoyo.com/ys/event/e20231209preview-yh731z/index.html
 
 3. Check the info on board.
    It should show following content:
+
+![Read_Content_INFO](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Read_Content_UI_INFO.jpg)
 
 * Zone Url
 * Event Name
@@ -57,6 +68,8 @@ Including:
 5. Wait until the program end.(It might take a while if the Spine import is really slow. I will try to improve it in future)
 
 6. If no error occur. Check the **Assets** folder, a new folder wich named by **Event Name** should be generated.
+
+![Read_Content_INFO](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Read_Content_Result.jpg)
 
 7. The spine files are stored in the folder beneath.
 
@@ -70,9 +83,13 @@ Including:
 
 1. For this feature, drag the SkeletonDataAssets into the scene view.
 
+![Movement_Drag](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Movement_Drag.jpg)
+
 2. Add Component **Skeleton Utility**.
 
 3. Click the **Spawn Hierachy** -> **Follow All Bones**
+
+![Movement_Add](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Movement_Add.jpg)
 
 4. Hit on the Unity Play Button, you should see the movement in runtime.
 
@@ -86,9 +103,13 @@ Including:
 
 4. Drag it to **Geometry Json** in Inspector view.
 
+![Generate_Geo](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Generate_Geo.jpg)
+
 5. Click the **Spawn Geometry**
 
 6. Check the generated gameobject hierachy, the first child node is always the root of scene node.
+
+![Generate_Geo_Result](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Generate_Geo_Result.jpg)
 
 7. Use set active/inactive to show only the scene you interest
 
@@ -107,28 +128,40 @@ Including:
 5. Hit on the Unity Play Button, the animation should work.
 
 
-# FAQ
+# Frequently Asked Question
 
-1. Why decode Mihoyo / Hoyoverse Website website failed?
+#### 1. Why decode Mihoyo / Hoyoverse Website failed?
 
-A: The decode is base on vendors.js and index.js analization. Due to the inconsitent between website content. It might failed sometimes, especially when the website is before 2021/09/28. 
+   A: The decode is base on vendors.js and index.js analization. Due to the inconsitent between website content. It might failed sometimes, especially when the website is before 2021/09/28. (The first aniversary review, I have tested it works.)
+   
+   Because the Mihoyo team change website js format in older version. For example, in older version, some website use bundle.js instead of index.js. The bundle.js format is really different from index.js
 
-Because the Mihoyo team change website js format in older version. For example, in older version, some website use bundle.js instead of index.js. The bundle.js format is really different from index.js
+   To support older Website bring in too much pain, it would be better to start another project to do so.
+   
+   However, in newer version website, they finally come to a much stable format.
+   
+   If the decode failed, feel free to write issue, remember to attach the website url and what error Unity reports.
+   
+   The Website too old would not support though.
 
-However, in newer version website, they finally come to a much stable format.
+#### 2. Why My Spine Texture Transparency looks weired?
 
-If the decode failed feel free to write issue, remember to attach the website url and what error Unity reports.
+   Please look at the second point in Preparation, or look at the document [Spine-Unity-Document](https://esotericsoftware.com/spine-unity) especially **Alpha Texture Settings** section.
+   
+   Then remove the imported spine files and reimport them in Unity again.
 
-The Website too old would not support though.
+#### 3. Why My Mihoyo Spine file looks weired in Official Spine Editor?
+   
+   (1) First, cloths, hair and tails might be generate by runtime scripts, not hard coded in spine file.
+   
+   (2) Second, the deform animation of attachments is bring out in json hierachy, so the official spine can not read deform animation correctly. In this runtime, it just skip the wrong hierachy to get correct result. In the future there will be scripts fix the case, so that the official spine can play mihoyo spine correctly.
 
-2. Why My Spine Texture Transparency looks weired?
+# Last But Not Least
 
-Please look at the second point in Preparation, or look at the document [Spine-Unity-Document](https://esotericsoftware.com/spine-unity) especially **Alpha Texture Settings** section.
+There are only scripts in repo. You should check the rights and avoid legal problems when using the resources get by this repo, especially usage in business!
 
-Then remove the imported spine files and reimport them in Unity again.
-
-
-
+If there are infringement in this repo. Just let me notice, I will delete relate resources as soon as possible.
+   
 
 ## The Following Content is the Original unity-spine-runtime readme
 
