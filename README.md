@@ -35,7 +35,7 @@ Including:
 1. For this feature, just drag the relate **Atlas** **Texture** and **Skeleton** file into Unity. It should decode them correctly.
 
   For example:
-* Arknights-> **Spine 3.5** (int latest, it has changed to 3.8)
+* Arknights-> **Spine 3.5** (in latest, it has changed to 3.8)
 * Princess Connect! Re:Dive -> **Spine 3.6**
 * Azurlane -> **Spine 3.8**
 * Blue Archive -> **Spine 3.8**
