@@ -1,169 +1,176 @@
 # WaifuSpineRuntime
 
-The **spine-unity** runtime provides functionality to load, manipulate and render [Spine](http://esotericsoftware.com) skeletal animation data using [Unity](http://unity3d.com/). 
+[For English User](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/README_en.md)
 
-But I added some other feature in it.
+**spine-unity** 是一个Unity插件可以，目的是在[Unity](http://unity3d.com/)中加载并播放 [Spine](http://esotericsoftware.com) 骨骼动画。 
 
-Including:
+不过和官方的版本比起来，我添加了一些功能
 
-1. Support Spine 3.5 to Spine 4.1 import without modification.(binary only, json still in progress).
+包括:
 
-2. Extract mihoyo / hoyoverse website and decode Spine correctly.
+1. 支持Spine 3.5到Spine 4.1版本的无痛导入(目前只支持二进制骨骼, json骨骼仍在施工中)。
 
-3. Add mihoyo / hoyoverse website spine runtime movement and hierachy rebuild.
+2. 一键解析 mihoyo / hoyoverse 网页并能下载Spine文件并正确导入。
 
-# Preparation
+3. 添加实现 mihoyo / hoyoverse 网页spine动态效果和网页层级重建。
 
-1. The Repo is Already a workable project for Unity2020 and above. Download it and Open it with Unity, you are good to go!
+# 事前准备
 
-   (branch for Unity 2017 is also provided, but it is always recomand to use Unity in newer version.)
+1. 该仓库已经是一个可用的Unity项目，可以用Unity2020以上版本打开。只需要下载并用Unity打开，就可以了。
 
-2. To Avoid Texture alpha looks weird, go to **Edit**->**Preference**->**Spine** in menu and set the Spine Editor Settings to the picture bellow.
-   (Just Use **Straight Alpha Preset**)
+   (我也准备放出一个Unity 2017兼容版本，但是如果可以的话，还是建议升级Unity版本。）
+
+2. 为了防止导入Unity中的贴图透明看起来不正确，请去到菜单栏**Edit**->**Preference**->**Spine** 按照下图所示，修改Spine Runtime的默认配置。
+   (就用**Straight Alpha Preset**配置即可)
 
 ![Transparent_Settings](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Transparent_Settings.jpg)
 
 
-    Tips:
+    一些提示:
     
-      if you have no idea why the second step makes alpha looks good.
+      如果你不清楚为什么要怎么做
       
-      read the [Spine-Unity-Document](https://esotericsoftware.com/spine-unity) especially **Alpha Texture Settings** section.
-# Usage
+      可以阅读官方文档 [Spine-Unity-Document](https://esotericsoftware.com/spine-unity) 特别是 **Alpha Texture Settings** 部分.
 
-## multiple spine version support
-1. For this feature, just drag the relate **Atlas** **Texture** and **Skeleton** file into Unity. It should decode them correctly.
+# 用法
 
-  For example:
-* Arknights-> **Spine 3.5** (in latest, it has changed to 3.8)
-* Princess Connect! Re:Dive -> **Spine 3.6**
-* Azurlane -> **Spine 3.8**
-* Blue Archive -> **Spine 3.8**
-* Genshin Impact -> **Spine 4.0+**
+## 多版本Spine导入兼容
+1. 对于这个功能, 只需要拖入对应的 **Atlas** **Texture** and **Skeleton** 文件进Unity。它就能正确解析。
+
+  比如:
+* 明日方舟-> **Spine 3.5** (最新版本, 已经是3.8版本)
+* 公主连结 Re:Dive-> **Spine 3.6**
+* 碧蓝航线 -> **Spine 3.8**
+* 蔚蓝档案 -> **Spine 3.8**
+* 原神(米家) -> **Spine 4.0+**
 
 ![Feature_1_Example](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Feature_1_Example.jpg)
 
-## Extract Mihoyo / Hoyoverse Website Spine
-1. For this feature,  Go to **ZeroFly** in menu. Click the **Read Vendors Content**, it should open up a new window, drag it to wherever you want.
+## 一键提取 Mihoyo / Hoyoverse 网页Spine
+1. 对于该功能,  菜单栏选择 **ZeroFly**。 点击 **Read Vendors Content**, 对应的解析窗体就会出现，你可以拖动到任意布局。
 
 ![Read_Content](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Read_Content.jpg)
 
-2. Enter the website url, make sure it is accesable through browser.
+2. 输入网页，当然要确认输入的网址确实是能访问到网页的。
 
 ![Read_Content_UI](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Read_Content_UI.jpg)
 
-    **Tips:** You can use this link as an example :https://act.mihoyo.com/ys/event/e20231209preview-yh731z/index.html
+    **提示:** 你可以用这个链接作为例子 :https://act.mihoyo.com/ys/event/e20231209preview-yh731z/index.html
 
-3. Check the info on board.
-   It should show following content:
+3. 检查下信息面板.
+   它会提供如下内容:
 
 ![Read_Content_INFO](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Read_Content_UI_INFO.jpg)
 
-* Zone Url
-* Event Name
-* Website Url
+* 域名
+* 活动名
+* 网页完整地址
 
-4. If every thing looks good, click the **Start Decode** button.
+4. 如果这些信息看着是正确的, 就可以点击**Start Decode**按钮了。
 
-5. Wait until the program end.(It might take a while if the Spine import is really slow. I will try to improve it in future)
+5. 等待一段时间直到进度条结束。(因为导入大量Spine会比较慢，所以要等一段时间，后续会想办法优化这部分)
 
-6. If no error occur. Check the **Assets** folder, a new folder wich named by **Event Name** should be generated.
+6. 如果程序能顺利结束。 看看工程里的 **Assets** 文件夹, 会有一个新文件夹生成，名字就是用的 **活动名**。
 
 ![Read_Content_INFO](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Read_Content_Result.jpg)
 
-7. The spine files are stored in the folder beneath.
+7. Spine 文件就保存在子文件夹中。
 
-## Implement Mihoyo / Hoyoverse Website Spine Movement
+## 实现 Mihoyo / Hoyoverse 网页Spine动态效果
 
-  #### Concept Explain: What is Mihoyo / Hoyoverse Website Spine Movement?
+  #### 概念解析: 什么是 Mihoyo / Hoyoverse 网页动态效果?
   
-  In many cases, the hair or tails of characters are not hard coded in Spine file, the movements are generated by runtime algorithm. 
+  在很多情况下, 角色的头发衣服尾巴，都不是硬编码在Spine文件中的，这些骨骼的位置都是实时解算的。 
   
-  That's why you can not view the tails movement in official Spine.
+  这也是为什么你在官方编辑器中无法看到部分动态效果。
 
-1. For this feature, drag the SkeletonDataAssets into the scene view.
+1. 对于这个功能, 首先拖动你想播放的SkeletonDataAssets进入Scene窗体。
 
 ![Movement_Drag](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Movement_Drag.jpg)
 
-2. Add Component **Skeleton Utility**.
+2. 添加组件 **Skeleton Utility**.
 
-3. Click the **Spawn Hierachy** -> **Follow All Bones**
+3. 点击 **Spawn Hierachy** -> **Follow All Bones**
 
 ![Movement_Add](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Movement_Add.jpg)
 
-4. Hit on the Unity Play Button, you should see the movement in runtime.
+4. 点击Unity播放按钮, 应该就能看到动态效果。
 
-## Rebuild Mihoyo / Hoyoverse Website Hierachy
+## 重建 Mihoyo / Hoyoverse 网页层级
 
-1. For this feature, create an empty GameObject in the hierrachy view by right click.
+1. 对于这个功能, 请先用右键，在Hierrachy窗体里创建一个空的GameObject对象。
 
-2. Add Component **Vendors Generator**
+2. 添加组件 **Vendors Generator**
 
-3. For every **Event Name** folder, which generated by Vendors Decoder, there should be one or more json file named with suffix **_Geo**
+3. 对于每一个用 Vendors Decoder生成的**活动名** 文件夹，都会有一个以 **_Geo** 为后缀的json文件。
 
-4. Drag it to **Geometry Json** in Inspector view.
+4. 拖它到 **Geometry Json** 这一栏。
 
 ![Generate_Geo](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Generate_Geo.jpg)
 
-5. Click the **Spawn Geometry**
+5. 点击 **Spawn Geometry**
 
-6. Check the generated gameobject hierachy, the first child node is always the root of scene node.
+6. 查看生成的层级, 通常第一个子节点，都是网页一个场景的根节点。
 
 ![Generate_Geo_Result](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Generate_Geo_Result.jpg)
 
-7. Use set active/inactive to show only the scene you interest
+7. 用显示和隐藏功能挑选出你感兴趣的场景。
 
-8. Hit on the Unity Play Button,you can see spine animation, particles should work as expected.
+8. 点击Unity播放按钮，你就可以看到Spine动画，粒子效果等。
 
-**Experiment Feature:** 
+**实验性功能:** 
 
-1. For every **Event Name** folder, there are a child folder named **otherResources**, all the unknown usage files are downloaded there.
+1. 对于每一个 **活动名** 文件夹, 都会有一个叫做 **otherResources**的子文件夹, 所有的暂不明用途文件都会下载到那里.
  
-2. There might json files named like **json_0_Other**,**json_1_Other**...etc, they might be animation files, you can drag them to **Animation File List**,then Click the **Spawn Geometry**
+2. 里面可能有形如**json_0_Other**,**json_1_Other**...等json文件, 这些可能是动画文件, 你可以拖到 **Animation File List**列表里,再点击**Spawn Geometry**
 
-3. You wil find animation files generated in **otherResources** folder.
+3. 你会看到**otherResources**文件夹里，多了个Animation文件夹。
 
-4. Add Animation Component on the GameObject where **VendorsGenerator** is attached.
+4. 在**VendorsGenerator** 对象下添加Animation组件，可以放入对应的动画文件。
  
-5. Hit on the Unity Play Button, the animation should work.
+5. 点击播放按钮，就可以看到动画效果。
 
 
-# Frequently Asked Question
+# 常见问题
 
-#### 1. Why decode Mihoyo / Hoyoverse Website failed?
+#### 1. 为什么我解析 Mihoyo / Hoyoverse 网页失败?
 
-   A: The decode is base on vendors.js and index.js analization. Due to the inconsitent between website content. It might failed sometimes, especially when the website is before 2021/09/28. (The first aniversary review, I have tested it works.)
+   回答: 网页解析是基于Vendors.js和Index.js。对于2021/09/28. (一周年总结，这个网页可以的)前的网页，写法已经和现在版本有很大不同。
    
-   Because the Mihoyo team change website js format in older version. For example, in older version, some website use bundle.js instead of index.js. The bundle.js format is really different from index.js
+   比如, 老版本中用的是bundle.js而不是index.js这2者写法有很大不同。
 
-   To support older Website bring in too much pain, it would be better to start another project to do so.
+   要支持太老的版本，实在是比较困难，还不如另开项目重写。
    
-   However, in newer version website, they finally come to a much stable format.
+   不过新版本的写法已经逐渐稳定趋同，新版本有更大概率可以正确解析。
    
-   If the decode failed, feel free to write issue, remember to attach the website url and what error Unity reports.
+   总之如果解析失败可以提issue，记得附上网页链接和Unity报错内容，非常感谢。
    
-   The Website too old would not support though.
+   但还请做好心理准备，太老的网页我确实不打算支持。
 
-#### 2. Why My Spine Texture Transparency looks weired?
+#### 2. 为什么我的Spine 透明看上去很怪?
 
-   Please look at the second point in Preparation, or look at the document [Spine-Unity-Document](https://esotericsoftware.com/spine-unity) especially **Alpha Texture Settings** section.
+   请阅读准备的第二点, 或者看官方文档的 [Spine-Unity-Document](https://esotericsoftware.com/spine-unity) **Alpha Texture Settings** 章节
    
-   Then remove the imported spine files and reimport them in Unity again.
+   对于已经导入的Spine，上述修改不会生效，请移除出Unity后重新导入。
 
-#### 3. Why My Mihoyo Spine file looks weired in Official Spine Editor?
+#### 3. 为什么我的 Mihoyo Spine 文件放进官方Spine Editor里看着动画很怪?
    
-   (1) First, cloths, hair and tails might be generate by runtime scripts, not hard coded in spine file.
+   (1) 首先, 衣服，头发，飘带，尾巴等都有可能是实时解算的, 没有硬编码写入Spine文件中。
    
-   (2) Second, the deform animation of attachments is bring out in json hierachy, so the official spine can not read deform animation correctly. In this runtime, it just skip the wrong hierachy to get correct result. In the future there will be scripts fix the case, so that the official spine can play mihoyo spine correctly.
+   (2) 其次, 米哈游把变形动画提出来了，没有放入Attachments中，这会导致官方Spine读取不正确。
 
-# Last But Not Least
+   目前我是把错误层级跳过，所以可以做到Untiy里正确读取。 
 
-There are only scripts in repo. You should check the rights and avoid legal problems when using the resources get by this repo, especially usage in business!
+   至于后续版本支不支持修复米哈游的层级修改问题，让官方Spine也能正确读取，还在考虑当中。
 
-If there are infringement in this repo. Just let me notice, I will delete relate resources as soon as possible.
+# 写在最后
+
+该仓库只包含Spine Runtime代码和一些示例工程。使用时请遵守官方Spine的License要求，并且一定要注意版权问题。 没有版权的素材一定不可用于商业用途。
+
+如果该仓库中有侵权内容，还请告知我，我会第一时间删除对应的素材。
    
 
-## The Following Content is the Original unity-spine-runtime readme
+## 下面是原版Spine Runtime Read Me
 
 # spine-unity
 
