@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated September 24, 2021. Replaces all prior versions.
+ * Last updated July 28, 2023. Replaces all prior versions.
  *
- * Copyright (c) 2013-2021, Esoteric Software LLC
+ * Copyright (c) 2013-2023, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software
- * or otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software or
+ * otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,8 +23,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
+ * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #if UNITY_2018_3 || UNITY_2019 || UNITY_2018_3_OR_NEWER
@@ -614,7 +614,7 @@ namespace Spine.Unity.Editor {
 				throw new System.ArgumentException("Mesh is not weighted.", "attachment");
 
 			Skeleton skeleton = new Skeleton(skeletonData);
-			skeleton.UpdateWorldTransform();
+			skeleton.UpdateWorldTransform(Skeleton.Physics.Update);
 
 			float[] floatVerts = new float[attachment.WorldVerticesLength];
 			attachment.ComputeWorldVertices(skeleton.Slots.Items[slotIndex], floatVerts);
@@ -835,7 +835,7 @@ namespace Spine.Unity.Editor {
 			bool inheritRotation = bone.Data.TransformMode.InheritsRotation();
 
 			animation.Apply(skeleton, 0, 0, false, null, 1f, MixBlend.Setup, MixDirection.In);
-			skeleton.UpdateWorldTransform();
+			skeleton.UpdateWorldTransform(Skeleton.Physics.Update);
 			float duration = animation.Duration;
 
 			AnimationCurve curve = new AnimationCurve();
@@ -863,7 +863,7 @@ namespace Spine.Unity.Editor {
 					currentTime = duration;
 
 				animation.Apply(skeleton, 0, currentTime, true, null, 1f, MixBlend.Setup, MixDirection.In);
-				skeleton.UpdateWorldTransform();
+				skeleton.UpdateWorldTransform(Skeleton.Physics.Update);
 
 				int pIndex = listIndex;
 
@@ -1449,7 +1449,7 @@ namespace Spine.Unity.Editor {
 					float time = frames[f];
 
 					timeline.Apply(skeleton, lastTime, currentTime, null, 1, MixBlend.Setup, MixDirection.In);
-					skeleton.UpdateWorldTransform();
+					skeleton.UpdateWorldTransform(Skeleton.Physics.Update);
 
 					rotation = frames[f + 1] + boneData.Rotation;
 					angle += Mathf.DeltaAngle(angle, rotation);
@@ -1463,7 +1463,7 @@ namespace Spine.Unity.Editor {
 							currentTime = time;
 
 						timeline.Apply(skeleton, lastTime, currentTime, null, 1, MixBlend.Setup, MixDirection.In);
-						skeleton.UpdateWorldTransform();
+						skeleton.UpdateWorldTransform(Skeleton.Physics.Update);
 						pk = keys[listIndex];
 
 						rotation = bone.Rotation;

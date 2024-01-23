@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated September 24, 2021. Replaces all prior versions.
+ * Last updated July 28, 2023. Replaces all prior versions.
  *
- * Copyright (c) 2013-2021, Esoteric Software LLC
+ * Copyright (c) 2013-2023, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software
- * or otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software or
+ * otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,13 +23,15 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
+ * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 using System;
 
 namespace Spine {
+	using Physics = Skeleton.Physics;
+
 	/// <summary>
 	/// <para>
 	/// Stores the current pose for an IK constraint. An IK constraint adjusts the rotation of 1 or 2 constrained bones so the tip of
@@ -49,7 +51,6 @@ namespace Spine {
 
 		public IkConstraint (IkConstraintData data, Skeleton skeleton) {
 			if (data == null) throw new ArgumentNullException("data", "data cannot be null.");
-			if (skeleton == null) throw new ArgumentNullException("skeleton", "skeleton cannot be null.");
 			this.data = data;
 			mix = data.mix;
 			softness = data.softness;
@@ -60,18 +61,17 @@ namespace Spine {
 			bones = new ExposedList<Bone>(data.bones.Count);
 			foreach (BoneData boneData in data.bones)
 				bones.Add(skeleton.bones.Items[boneData.index]);
+
 			target = skeleton.bones.Items[data.target.index];
 		}
 
 		/// <summary>Copy constructor.</summary>
-		public IkConstraint (IkConstraint constraint, Skeleton skeleton) {
-			if (constraint == null) throw new ArgumentNullException("constraint cannot be null.");
-			if (skeleton == null) throw new ArgumentNullException("skeleton cannot be null.");
+		public IkConstraint (IkConstraint constraint) {
+			if (constraint == null) throw new ArgumentNullException("constraint", "constraint cannot be null.");
 			data = constraint.data;
 			bones = new ExposedList<Bone>(constraint.Bones.Count);
-			foreach (Bone bone in constraint.Bones)
-				bones.Add(skeleton.Bones.Items[bone.data.index]);
-			target = skeleton.Bones.Items[constraint.target.data.index];
+			bones.AddRange(constraint.Bones);
+			target = constraint.target;
 			mix = constraint.mix;
 			softness = constraint.softness;
 			bendDirection = constraint.bendDirection;
@@ -79,7 +79,16 @@ namespace Spine {
 			stretch = constraint.stretch;
 		}
 
-		public void Update () {
+		public void SetToSetupPose () {
+			IkConstraintData data = this.data;
+			mix = data.mix;
+			softness = data.softness;
+			bendDirection = data.bendDirection;
+			compress = data.compress;
+			stretch = data.stretch;
+		}
+
+		public void Update (Physics physics) {
 			if (mix == 0) return;
 			Bone target = this.target;
 			Bone[] bones = this.bones.Items;
@@ -173,11 +182,11 @@ namespace Spine {
 				break;
 			case TransformMode.NoRotationOrReflection: {
 				float s = Math.Abs(pa * pd - pb * pc) / Math.Max(0.0001f, pa * pa + pc * pc);
-				float sa = pa / bone.skeleton.ScaleX;
-				float sc = pc / bone.skeleton.ScaleY;
-				pb = -sc * s * bone.skeleton.ScaleX;
-				pd = sa * s * bone.skeleton.ScaleY;
-				rotationIK += (float)Math.Atan2(sc, sa) * MathUtils.RadDeg;
+				float sa = pa / bone.skeleton.scaleX;
+				float sc = pc / bone.skeleton.scaleY;
+				pb = -sc * s * bone.skeleton.scaleX;
+				pd = sa * s * bone.skeleton.scaleY;
+				rotationIK += MathUtils.Atan2Deg(sc, sa);
 				goto default; // Fall through.
 			}
 			default: {
@@ -194,7 +203,7 @@ namespace Spine {
 			}
 			}
 
-			rotationIK += (float)Math.Atan2(ty, tx) * MathUtils.RadDeg;
+			rotationIK += MathUtils.Atan2Deg(ty, tx);
 			if (bone.ascaleX < 0) rotationIK += 180;
 			if (rotationIK > 180)
 				rotationIK -= 360;
@@ -210,11 +219,14 @@ namespace Spine {
 					ty = targetY - bone.worldY;
 					break;
 				}
-				float b = bone.data.length * sx, dd = (float)Math.Sqrt(tx * tx + ty * ty);
-				if ((compress && dd < b) || (stretch && dd > b) && b > 0.0001f) {
-					float s = (dd / b - 1) * alpha + 1;
-					sx *= s;
-					if (uniform) sy *= s;
+				float b = bone.data.length * sx;
+				if (b > 0.0001f) {
+					float dd = tx * tx + ty * ty;
+					if ((compress && dd < b * b) || (stretch && dd > b * b)) {
+						float s = ((float)Math.Sqrt(dd) / b - 1) * alpha + 1;
+						sx *= s;
+						if (uniform) sy *= s;
+					}
 				}
 			}
 			bone.UpdateWorldTransform(bone.ax, bone.ay, bone.arotation + rotationIK * alpha, sx, sy, bone.ashearX, bone.ashearY);

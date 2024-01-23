@@ -19,60 +19,60 @@ Shader "Spine/SkeletonGraphic Fill"
 
 		[Toggle(UNITY_UI_ALPHACLIP)] _UseUIAlphaClip("Use Alpha Clip", Float) = 0
 
-			// Outline properties are drawn via custom editor.
-			[HideInInspector] _OutlineWidth("Outline Width", Range(0,8)) = 3.0
-			[HideInInspector] _OutlineColor("Outline Color", Color) = (1,1,0,1)
-			[HideInInspector] _OutlineReferenceTexWidth("Reference Texture Width", Int) = 1024
-			[HideInInspector] _ThresholdEnd("Outline Threshold", Range(0,1)) = 0.25
-			[HideInInspector] _OutlineSmoothness("Outline Smoothness", Range(0,1)) = 1.0
-			[HideInInspector][MaterialToggle(_USE8NEIGHBOURHOOD_ON)] _Use8Neighbourhood("Sample 8 Neighbours", Float) = 1
-			[HideInInspector] _OutlineOpaqueAlpha("Opaque Alpha", Range(0,1)) = 1.0
-			[HideInInspector] _OutlineMipLevel("Outline Mip Level", Range(0,3)) = 0
+		// Outline properties are drawn via custom editor.
+		[HideInInspector] _OutlineWidth("Outline Width", Range(0,8)) = 3.0
+		[HideInInspector] _OutlineColor("Outline Color", Color) = (1,1,0,1)
+		[HideInInspector] _OutlineReferenceTexWidth("Reference Texture Width", Int) = 1024
+		[HideInInspector] _ThresholdEnd("Outline Threshold", Range(0,1)) = 0.25
+		[HideInInspector] _OutlineSmoothness("Outline Smoothness", Range(0,1)) = 1.0
+		[HideInInspector][MaterialToggle(_USE8NEIGHBOURHOOD_ON)] _Use8Neighbourhood("Sample 8 Neighbours", Float) = 1
+		[HideInInspector] _OutlineOpaqueAlpha("Opaque Alpha", Range(0,1)) = 1.0
+		[HideInInspector] _OutlineMipLevel("Outline Mip Level", Range(0,3)) = 0
 	}
 
-		SubShader
+	SubShader
+	{
+		Tags
 		{
-			Tags
-			{
-				"Queue" = "Transparent"
-				"IgnoreProjector" = "True"
-				"RenderType" = "Transparent"
-				"PreviewType" = "Plane"
-				"CanUseSpriteAtlas" = "True"
-			}
-
-			Stencil
-			{
-				Ref[_Stencil]
-				Comp[_StencilComp]
-				Pass[_StencilOp]
-				ReadMask[_StencilReadMask]
-				WriteMask[_StencilWriteMask]
-			}
-
-			Cull Off
-			Lighting Off
-			ZWrite Off
-			ZTest[unity_GUIZTestMode]
-			Fog { Mode Off }
-			Blend One OneMinusSrcAlpha
-			ColorMask[_ColorMask]
-
-			Pass
-			{
-				Name "Normal"
-
-			CGPROGRAM
-				#pragma shader_feature _ _STRAIGHT_ALPHA_INPUT
-				#pragma shader_feature _ _CANVAS_GROUP_COMPATIBLE
-				#pragma vertex vert
-				#pragma fragment frag
-				#pragma target 2.0
-
-				#define ENABLE_FILL
-				#include "CGIncludes/Spine-SkeletonGraphic-NormalPass.cginc"
-			ENDCG
-			}
+			"Queue" = "Transparent"
+			"IgnoreProjector" = "True"
+			"RenderType" = "Transparent"
+			"PreviewType" = "Plane"
+			"CanUseSpriteAtlas" = "True"
 		}
-			CustomEditor "SpineShaderWithOutlineGUI"
+
+		Stencil
+		{
+			Ref[_Stencil]
+			Comp[_StencilComp]
+			Pass[_StencilOp]
+			ReadMask[_StencilReadMask]
+			WriteMask[_StencilWriteMask]
+		}
+
+		Cull Off
+		Lighting Off
+		ZWrite Off
+		ZTest[unity_GUIZTestMode]
+		Fog { Mode Off }
+		Blend One OneMinusSrcAlpha
+		ColorMask[_ColorMask]
+
+		Pass
+		{
+			Name "Normal"
+
+		CGPROGRAM
+			#pragma shader_feature _ _STRAIGHT_ALPHA_INPUT
+			#pragma shader_feature _ _CANVAS_GROUP_COMPATIBLE
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma target 2.0
+
+			#define ENABLE_FILL
+			#include "CGIncludes/Spine-SkeletonGraphic-NormalPass.cginc"
+		ENDCG
+		}
+	}
+	CustomEditor "SpineShaderWithOutlineGUI"
 }

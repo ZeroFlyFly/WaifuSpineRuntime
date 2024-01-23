@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated September 24, 2021. Replaces all prior versions.
+ * Last updated July 28, 2023. Replaces all prior versions.
  *
- * Copyright (c) 2013-2021, Esoteric Software LLC
+ * Copyright (c) 2013-2023, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software
- * or otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software or
+ * otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,8 +23,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
+ * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #if UNITY_2019_3_OR_NEWER
@@ -48,11 +48,19 @@ namespace Spine.Unity {
 		/// <summary> Vertex positions. To be used for UnityEngine.Mesh.vertices.</summary>
 		public Vector3[] vertexBuffer;
 
-		/// <summary> Vertex UVs. To be used for UnityEngine.Mesh.uvs.</summary>
+		/// <summary> Vertex texture coordinates (UVs). To be used for UnityEngine.Mesh.uv.</summary>
 		public Vector2[] uvBuffer;
 
 		/// <summary> Vertex colors. To be used for UnityEngine.Mesh.colors32.</summary>
 		public Color32[] colorBuffer;
+
+		/// <summary> Optional vertex texture coordinates (UVs), second channel. To be used for UnityEngine.Mesh.uv2.
+		/// Using this accessor automatically allocates and resizes the buffer accordingly.</summary>
+		public Vector2[] uv2Buffer { get { return meshGenerator.UV2; } }
+
+		/// <summary> Optional vertex texture coordinates (UVs), third channel. To be used for UnityEngine.Mesh.uv3.
+		/// Using this accessor automatically allocates and resizes the buffer accordingly.</summary>
+		public Vector2[] uv3Buffer { get { return meshGenerator.UV3; } }
 
 		/// <summary> The Spine rendering component's MeshGenerator. </summary>
 		public MeshGenerator meshGenerator;
@@ -118,6 +126,13 @@ namespace Spine.Unity {
 		[NonSerialized] Vector2[] tempTanBuffer;
 		[NonSerialized] ExposedList<Vector2> uv2;
 		[NonSerialized] ExposedList<Vector2> uv3;
+
+		/// <summary> Optional vertex texture coordinates (UVs), second channel. To be used for UnityEngine.Mesh.uv2.
+		/// Using this accessor automatically allocates and resizes the buffer accordingly.</summary>
+		public Vector2[] UV2 { get { PrepareOptionalUVBuffer(ref uv2, vertexBuffer.Count); return uv2.Items; } }
+		/// <summary> Optional vertex texture coordinates (UVs), third channel. To be used for UnityEngine.Mesh.uv3.
+		/// Using this accessor automatically allocates and resizes the buffer accordingly.</summary>
+		public Vector2[] UV3 { get { PrepareOptionalUVBuffer(ref uv3, vertexBuffer.Count); return uv3.Items; } }
 		#endregion
 
 		public int VertexCount { get { return vertexBuffer.Count; } }
@@ -766,17 +781,8 @@ namespace Spine.Unity {
 					int vi = vertexIndex;
 					b2.y = 1f;
 
-					{
-						if (uv2 == null) {
-							uv2 = new ExposedList<Vector2>();
-							uv3 = new ExposedList<Vector2>();
-						}
-						if (totalVertexCount > uv2.Items.Length) { // Manual ExposedList.Resize()
-							Array.Resize(ref uv2.Items, totalVertexCount);
-							Array.Resize(ref uv3.Items, totalVertexCount);
-						}
-						uv2.Count = uv3.Count = totalVertexCount;
-					}
+					PrepareOptionalUVBuffer(ref uv2, totalVertexCount);
+					PrepareOptionalUVBuffer(ref uv3, totalVertexCount);
 
 					Vector2[] uv2i = uv2.Items;
 					Vector2[] uv3i = uv3.Items;
@@ -1039,23 +1045,34 @@ namespace Spine.Unity {
 
 			int ovc = vertexBuffer.Count;
 			int newVertexCount = ovc + vertexCount;
-			{
-				if (uv2 == null) {
-					uv2 = new ExposedList<Vector2>();
-					uv3 = new ExposedList<Vector2>();
-				}
-				if (newVertexCount > uv2.Items.Length) { // Manual ExposedList.Resize()
-					Array.Resize(ref uv2.Items, newVertexCount);
-					Array.Resize(ref uv3.Items, newVertexCount);
-				}
-				uv2.Count = uv3.Count = newVertexCount;
-			}
+
+			PrepareOptionalUVBuffer(ref uv2, newVertexCount);
+			PrepareOptionalUVBuffer(ref uv3, newVertexCount);
 
 			Vector2[] uv2i = uv2.Items;
 			Vector2[] uv3i = uv3.Items;
 			for (int i = 0; i < vertexCount; i++) {
 				uv2i[ovc + i] = rg;
 				uv3i[ovc + i] = bo;
+			}
+		}
+
+		void PrepareOptionalUVBuffer (ref ExposedList<Vector2> uvBuffer, int vertexCount) {
+			if (uvBuffer == null) {
+				uvBuffer = new ExposedList<Vector2>();
+			}
+			if (vertexCount > uvBuffer.Items.Length) { // Manual ExposedList.Resize()
+				Array.Resize(ref uvBuffer.Items, vertexCount);
+			}
+			uvBuffer.Count = vertexCount;
+		}
+
+		void ResizeOptionalUVBuffer (ref ExposedList<Vector2> uvBuffer, int vertexCount) {
+			if (uvBuffer != null) {
+				if (vertexCount != uvBuffer.Items.Length) {
+					Array.Resize(ref uvBuffer.Items, vertexCount);
+					uvBuffer.Count = vertexCount;
+				}
 			}
 		}
 		#endregion
@@ -1100,18 +1117,12 @@ namespace Spine.Unity {
 					mesh.normals = this.normals;
 				}
 
-				if (settings.tintBlack) {
-					if (uv2 != null) {
-						// Sometimes, the vertex buffer becomes smaller. We need to trim the size of the tint black buffers to match.
-						if (vbiLength != uv2.Items.Length) {
-							Array.Resize(ref uv2.Items, vbiLength);
-							Array.Resize(ref uv3.Items, vbiLength);
-							uv2.Count = uv3.Count = vbiLength;
-						}
-						mesh.uv2 = this.uv2.Items;
-						mesh.uv3 = this.uv3.Items;
-					}
-				}
+				// Sometimes, the vertex buffer becomes smaller. We need to trim the size of
+				// the uv2 and uv3 buffers (used for tint black) to match.
+				ResizeOptionalUVBuffer(ref uv2, vbiLength);
+				ResizeOptionalUVBuffer(ref uv3, vbiLength);
+				mesh.uv2 = this.uv2 == null ? null : this.uv2.Items;
+				mesh.uv3 = this.uv3 == null ? null : this.uv3.Items;
 			}
 		}
 

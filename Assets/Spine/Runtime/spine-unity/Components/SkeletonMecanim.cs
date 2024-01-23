@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated September 24, 2021. Replaces all prior versions.
+ * Last updated July 28, 2023. Replaces all prior versions.
  *
- * Copyright (c) 2013-2021, Esoteric Software LLC
+ * Copyright (c) 2013-2023, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software
- * or otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software or
+ * otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,8 +23,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
+ * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 using System.Collections.Generic;
@@ -101,25 +101,32 @@ namespace Spine.Unity {
 
 		public virtual void Update () {
 			if (!valid || updateTiming != UpdateTiming.InUpdate) return;
-			UpdateAnimation();
+			UpdateAnimation(Time.deltaTime);
 		}
 
 		public virtual void FixedUpdate () {
 			if (!valid || updateTiming != UpdateTiming.InFixedUpdate) return;
-			UpdateAnimation();
+			UpdateAnimation(Time.deltaTime);
 		}
 
-		protected void UpdateAnimation () {
+		/// <summary>Manual animation update. Required when <c>updateTiming</c> is set to <c>ManualUpdate</c>.</summary>
+		/// <param name="deltaTime">Ignored parameter.</param>
+		public virtual void Update (float deltaTime) {
+			if (!valid) return;
+			UpdateAnimation(deltaTime);
+		}
+
+		protected void UpdateAnimation (float deltaTime) {
 			wasUpdatedAfterInit = true;
 
 			// animation status is kept by Mecanim Animator component
 			if (updateMode <= UpdateMode.OnlyAnimationStatus)
 				return;
 
-			ApplyAnimation();
+			ApplyAnimation(deltaTime);
 		}
 
-		protected void ApplyAnimation () {
+		protected void ApplyAnimation (float deltaTime) {
 			if (_BeforeApply != null)
 				_BeforeApply(this);
 
@@ -141,25 +148,28 @@ namespace Spine.Unity {
 #else
 			translator.Apply(skeleton);
 #endif
+			skeleton.Update(deltaTime);
+			AfterAnimationApplied();
+		}
 
-			// UpdateWorldTransform and Bone Callbacks
-			{
-				if (_UpdateLocal != null)
-					_UpdateLocal(this);
+		public void AfterAnimationApplied () {
+			if (_UpdateLocal != null)
+				_UpdateLocal(this);
 
-				skeleton.UpdateWorldTransform();
+			UpdateWorldTransform();
 
-				if (_UpdateWorld != null) {
-					_UpdateWorld(this);
-					skeleton.UpdateWorldTransform();
-				}
-
-				if (_UpdateComplete != null)
-					_UpdateComplete(this);
+			if (_UpdateWorld != null) {
+				_UpdateWorld(this);
+				UpdateWorldTransform();
 			}
+
+			if (_UpdateComplete != null)
+				_UpdateComplete(this);
 		}
 
 		public override void LateUpdate () {
+			if (updateTiming == UpdateTiming.InLateUpdate && valid && translator != null && translator.Animator != null)
+				UpdateAnimation(Time.deltaTime);
 			// instantiation can happen from Update() after this component, leading to a missing Update() call.
 			if (!wasUpdatedAfterInit) Update();
 			base.LateUpdate();
