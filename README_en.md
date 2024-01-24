@@ -6,7 +6,7 @@ But I added some other feature in it.
 
 Including:
 
-1. Support Spine 3.5 to Spine 4.1 import without modification.(binary only, json still in progress).
+1. Support Spine 3.5 to Spine 4.2 import without modification.(binary only, json still in progress).
 
 2. Extract mihoyo / hoyoverse website and decode Spine correctly.
 
