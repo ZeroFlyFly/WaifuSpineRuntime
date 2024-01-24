@@ -1206,7 +1206,7 @@ public class VendorsDecoder : EditorWindow
 
                 int startIndex = jsonM.Index + 11;
 
-                string json = FindPairComment(startIndex, vendorsText, false);
+                string json = FindJsonPairComment(startIndex, vendorsText, false);
 
                 json = json.Replace("4.0-from-", "");
 
@@ -1813,6 +1813,93 @@ public class VendorsDecoder : EditorWindow
         UnityEngine.Debug.Log("Finish Reading Vendors! Enjoy!");
 
         return;
+    }
+
+    static string FindJsonPairComment(int startIndex, string origin, bool withBracket)
+    {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        char startBracket = origin[startIndex];
+
+        int before = startIndex - 1;
+
+        if (startBracket != '\"' && startBracket != '\'')
+            return stringBuilder.ToString();
+
+        char beforeChar = '@';
+
+        if (before >= 0)
+        {
+            beforeChar = origin[before];
+        }
+
+        char afterChar = '@';
+
+        int after = startIndex + 1;
+
+        for (int i = startIndex; i < origin.Length; i++)
+        {
+            char current = origin[i];
+
+            stringBuilder.Append(current);
+
+            if (current == startBracket && i != startIndex)
+            {
+                switch (beforeChar)
+                {
+                    case '(':
+                        afterChar = '@';
+
+                        after = i + 1;
+
+                        if (after < origin.Length)
+                        {
+                            afterChar = origin[after];
+                        }
+
+                        if (afterChar != ')')
+                            continue;
+                        break;
+                    case '[':
+                        afterChar = '@';
+                        if (after < origin.Length)
+                        {
+                            afterChar = origin[after];
+                        }
+
+                        if (afterChar != ']')
+                            continue;
+                        break;
+                    case '{':
+                        afterChar = '@';
+                        if (after < origin.Length)
+                        {
+                            afterChar = origin[after];
+                        }
+
+                        if (afterChar != '}')
+                            continue;
+                        break;
+                }
+                break;
+            }
+
+        }
+        string result = stringBuilder.ToString();
+
+        if (withBracket)
+        {
+            return result;
+        }
+        else
+        {
+            if (result.Length > 2) // May be trucate by origin.Length
+            {
+                return result.Substring(1, result.Length - 2);
+            }
+        }
+        //result = withBracket ? result : result.Substring(1, result.Length - 2);
+        return result;
     }
 
     static string FindPairComment(int startIndex, string origin, bool withBracket)

@@ -695,7 +695,7 @@ namespace Spine.Unity.AttachmentTools {
 
 		/// <summary>
 		/// Get a rect with flipped Y so that a Spine atlas rect gets converted to a Unity Sprite rect and vice versa.</summary>
-		static Rect SpineUnityFlipRect (this Rect rect, int textureHeight) {
+		static Rect SpineUnityFlipRect (this Rect rect, float textureHeight) {
 			rect.y = textureHeight - rect.y - rect.height;
 			return rect;
 		}
@@ -709,7 +709,7 @@ namespace Spine.Unity.AttachmentTools {
 
 		/// <summary>
 		/// Gets the Rect of an AtlasRegion according to Unity texture coordinates (x-right, y-up).</summary>
-		static Rect GetUnityRect (this AtlasRegion region, int textureHeight) {
+		static Rect GetUnityRect (this AtlasRegion region, float textureHeight) {
 			return region.GetSpineAtlasRect().SpineUnityFlipRect(textureHeight);
 		}
 
@@ -727,7 +727,7 @@ namespace Spine.Unity.AttachmentTools {
 
 		/// <summary>
 		/// Denormalize a uvRect into a texture-space Rect.</summary>
-		static Rect UVRectToTextureRect (Rect uvRect, int texWidth, int texHeight) {
+		static Rect UVRectToTextureRect (Rect uvRect, float texWidth, float texHeight) {
 			uvRect.x *= texWidth;
 			uvRect.width *= texWidth;
 			uvRect.y *= texHeight;

@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated September 24, 2021. Replaces all prior versions.
+ * Last updated July 28, 2023. Replaces all prior versions.
  *
- * Copyright (c) 2013-2021, Esoteric Software LLC
+ * Copyright (c) 2013-2023, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software
- * or otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software or
+ * otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,8 +23,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
+ * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 using System;
@@ -44,7 +44,7 @@ namespace Spine {
 		internal ExposedList<IkConstraintData> ikConstraints = new ExposedList<IkConstraintData>();
 		internal ExposedList<TransformConstraintData> transformConstraints = new ExposedList<TransformConstraintData>();
 		internal ExposedList<PathConstraintData> pathConstraints = new ExposedList<PathConstraintData>();
-		internal ExposedList<SpringConstraintData> springConstraints = new ExposedList<SpringConstraintData>();
+		internal ExposedList<PhysicsConstraintData> physicsConstraints = new ExposedList<PhysicsConstraintData>();
 		internal float x, y, width, height;
 		internal string version, hash;
 
@@ -52,8 +52,8 @@ namespace Spine {
 		internal float fps;
 		internal string imagesPath, audioPath;
 
-		///<summary>The skeleton's name, which by default is the name of the skeleton data file when possible, or null when a name hasn't been
-		///set.</summary>
+		/// <summary>The skeleton's name, which by default is the name of the skeleton data file when possible, or null when a name hasn't been
+		/// set.</summary>
 		public string Name { get { return name; } set { name = value; } }
 
 		/// <summary>The skeleton's bones, sorted parent first. The root bone is always the first bone.</summary>
@@ -73,11 +73,18 @@ namespace Spine {
 		/// <return>May be null.</return>
 		public Skin DefaultSkin { get { return defaultSkin; } set { defaultSkin = value; } }
 
+		/// <summary>The skeleton's events.</summary>
 		public ExposedList<EventData> Events { get { return events; } set { events = value; } }
+		/// <summary>The skeleton's animations.</summary>
 		public ExposedList<Animation> Animations { get { return animations; } set { animations = value; } }
+		/// <summary>The skeleton's IK constraints.</summary>
 		public ExposedList<IkConstraintData> IkConstraints { get { return ikConstraints; } set { ikConstraints = value; } }
+		/// <summary>The skeleton's transform constraints.</summary>
 		public ExposedList<TransformConstraintData> TransformConstraints { get { return transformConstraints; } set { transformConstraints = value; } }
+		/// <summary>The skeleton's path constraints.</summary>
 		public ExposedList<PathConstraintData> PathConstraints { get { return pathConstraints; } set { pathConstraints = value; } }
+		/// <summary>The skeleton's physics constraints.</summary>
+		public ExposedList<PhysicsConstraintData> PhysicsConstraints { get { return physicsConstraints; } set { physicsConstraints = value; } }
 
 		public float X { get { return x; } set { x = value; } }
 		public float Y { get { return y; } set { y = value; } }
@@ -86,8 +93,8 @@ namespace Spine {
 		/// <summary>The Spine version used to export this data, or null.</summary>
 		public string Version { get { return version; } set { version = value; } }
 
-		///<summary>The skeleton data hash. This value will change if any of the skeleton data has changed.
-		///May be null.</summary>
+		/// <summary>The skeleton data hash. This value will change if any of the skeleton data has changed.
+		/// May be null.</summary>
 		public string Hash { get { return hash; } set { hash = value; } }
 
 		public string ImagesPath { get { return imagesPath; } set { imagesPath = value; } }
@@ -204,18 +211,18 @@ namespace Spine {
 			return null;
 		}
 
-		// --- Spring constraints
+		// --- Physics constraints
 
 		/// <summary>
-		/// Finds a spring constraint by comparing each spring constraint's name. It is more efficient to cache the results of this
+		/// Finds a physics constraint by comparing each physics constraint's name. It is more efficient to cache the results of this
 		/// method than to call it multiple times.
 		/// </summary>
 		/// <returns>May be null.</returns>
-		public SpringConstraintData FindSpringConstraint (String constraintName) {
+		public PhysicsConstraintData FindPhysicsConstraint (String constraintName) {
 			if (constraintName == null) throw new ArgumentNullException("constraintName", "constraintName cannot be null.");
-			Object[] springConstraints = this.springConstraints.Items;
-			for (int i = 0, n = this.springConstraints.Count; i < n; i++) {
-				SpringConstraintData constraint = (SpringConstraintData)springConstraints[i];
+			PhysicsConstraintData[] physicsConstraints = this.physicsConstraints.Items;
+			for (int i = 0, n = this.physicsConstraints.Count; i < n; i++) {
+				PhysicsConstraintData constraint = (PhysicsConstraintData)physicsConstraints[i];
 				if (constraint.name.Equals(constraintName)) return constraint;
 			}
 			return null;

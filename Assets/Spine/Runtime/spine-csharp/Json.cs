@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated September 24, 2021. Replaces all prior versions.
+ * Last updated July 28, 2023. Replaces all prior versions.
  *
- * Copyright (c) 2013-2021, Esoteric Software LLC
+ * Copyright (c) 2013-2023, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software
- * or otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software or
+ * otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,8 +23,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
+ * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 using System;
@@ -155,44 +155,44 @@ namespace SharpJson {
 					c = json[index++];
 
 					switch (c) {
-						case '"':
-							stringBuffer[idx++] = '"';
-							break;
-						case '\\':
-							stringBuffer[idx++] = '\\';
-							break;
-						case '/':
-							stringBuffer[idx++] = '/';
-							break;
-						case 'b':
-							stringBuffer[idx++] = '\b';
-							break;
-						case 'f':
-							stringBuffer[idx++] = '\f';
-							break;
-						case 'n':
-							stringBuffer[idx++] = '\n';
-							break;
-						case 'r':
-							stringBuffer[idx++] = '\r';
-							break;
-						case 't':
-							stringBuffer[idx++] = '\t';
-							break;
-						case 'u':
-							int remainingLength = json.Length - index;
-							if (remainingLength >= 4) {
-								string hex = new string(json, index, 4);
+					case '"':
+						stringBuffer[idx++] = '"';
+						break;
+					case '\\':
+						stringBuffer[idx++] = '\\';
+						break;
+					case '/':
+						stringBuffer[idx++] = '/';
+						break;
+					case 'b':
+						stringBuffer[idx++] = '\b';
+						break;
+					case 'f':
+						stringBuffer[idx++] = '\f';
+						break;
+					case 'n':
+						stringBuffer[idx++] = '\n';
+						break;
+					case 'r':
+						stringBuffer[idx++] = '\r';
+						break;
+					case 't':
+						stringBuffer[idx++] = '\t';
+						break;
+					case 'u':
+						int remainingLength = json.Length - index;
+						if (remainingLength >= 4) {
+							string hex = new string(json, index, 4);
 
-								// XXX: handle UTF
-								stringBuffer[idx++] = (char)Convert.ToInt32(hex, 16);
+							// XXX: handle UTF
+							stringBuffer[idx++] = (char)Convert.ToInt32(hex, 16);
 
-								// skip 4 chars
-								index += 4;
-							} else {
-								failed = true;
-							}
-							break;
+							// skip 4 chars
+							index += 4;
+						} else {
+							failed = true;
+						}
+						break;
 					}
 				} 
 				else if(bracketStart == '@' && c == '[')
@@ -502,29 +502,30 @@ namespace SharpJson {
 
 		object ParseValue () {
 			switch (lexer.LookAhead()) {
-				case Lexer.Token.String:
-					return EvalLexer(lexer.ParseString());
-				case Lexer.Token.Number:
-					if (parseNumbersAsFloat)
-						return EvalLexer(lexer.ParseFloatNumber());
-					else
-						return EvalLexer(lexer.ParseDoubleNumber());
-				case Lexer.Token.CurlyOpen:
-					return ParseObject();
-				case Lexer.Token.SquaredOpen:
-					return ParseArray();
-				case Lexer.Token.True:
-					lexer.NextToken();
-					return true;
-				case Lexer.Token.False:
-					lexer.NextToken();
-					return false;
-				case Lexer.Token.Null:
-					lexer.NextToken();
-					return null;
-				case Lexer.Token.None:
-					break;
+			case Lexer.Token.String:
+				return EvalLexer(lexer.ParseString());
+			case Lexer.Token.Number:
+				if (parseNumbersAsFloat)
+					return EvalLexer(lexer.ParseFloatNumber());
+				else
+					return EvalLexer(lexer.ParseDoubleNumber());
+			case Lexer.Token.CurlyOpen:
+				return ParseObject();
+			case Lexer.Token.SquaredOpen:
+				return ParseArray();
+			case Lexer.Token.True:
+				lexer.NextToken();
+				return true;
+			case Lexer.Token.False:
+				lexer.NextToken();
+				return false;
+			case Lexer.Token.Null:
+				lexer.NextToken();
+				return null;
+			case Lexer.Token.None:
+				break;
 			}
+
 			TriggerError("Unable to parse value");
 			return null;
 		}

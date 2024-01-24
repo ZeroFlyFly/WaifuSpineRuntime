@@ -432,17 +432,17 @@ namespace Spine.Unity
                         case 2:
                             Dictionary<string, object> config = (Dictionary<string, object>)geoDict["config"];
 
-                            int width = 0;
-                            int height = 0;
+                            float width = 0;
+                            float height = 0;
 
                             if (config.ContainsKey("width"))
                             {
-                                width = int.Parse("" + config["width"]);
+                                width = float.Parse("" + config["width"]);
                             }
 
                             if (config.ContainsKey("height"))
                             {
-                                height = int.Parse("" + config["height"]);
+                                height = float.Parse("" + config["height"]);
                             }
 
                             if(width > 0 && height > 0)
@@ -827,60 +827,60 @@ namespace Spine.Unity
 
                     SkeletonDataAsset sda = AssetDatabase.LoadAssetAtPath(spinePath, typeof(SkeletonDataAsset)) as SkeletonDataAsset;
 
-                    if(sda == null)
+                    if (sda != null)
+                    {
+                        SkeletonAnimation sa = childGO.AddComponent<SkeletonAnimation>();
+
+                        MeshRenderer spineRenderer = sa.GetComponent<MeshRenderer>();
+
+                        spineRenderer.sortingOrder = renderOrder;
+
+                        sa.skeletonDataAsset = sda;
+
+                        sa.loop = true;
+
+                        string defaultAnimation = "animation";
+
+                        //Debug.Log(id + " " + sda.GetAnimationStateData().SkeletonData.Animations.Count);
+
+                        if (sda.GetAnimationStateData().SkeletonData.Animations.Count > 0)
+                        {
+                            Animation[] animationList = sda.GetAnimationStateData().SkeletonData.Animations.ToArray();
+                            defaultAnimation = animationList[0].Name;
+                        }
+
+                        if (spineInfo.ContainsKey("defaultAnimation"))
+                        {
+                            defaultAnimation = (string)spineInfo["defaultAnimation"];
+                        }
+
+                        if (spineInfo.ContainsKey("skin"))
+                        {
+                            string initialSkin = (string)spineInfo["skin"];
+
+                            sa.initialSkinName = initialSkin;
+                        }
+
+                        if (!string.IsNullOrEmpty(defaultAnimation))
+                        {
+                            sa.AnimationName = defaultAnimation;
+                        }
+
+                        if (spineInfo.ContainsKey("timeScale"))
+                        {
+                            float timeScale = float.Parse("" + spineInfo["timeScale"]);
+
+                            sa.timeScale = timeScale;
+                        }
+
+                        SkeletonUtility su = childGO.AddComponent<SkeletonUtility>();
+
+                        su.SpawnHierarchy(SkeletonUtilityBone.Mode.Follow, true, true, true);
+                    }
+                    else
                     {
                         UnityEngine.Debug.LogError("Failed to Load Path : " + spinePath);
-
-                        return;
                     }
-
-                    SkeletonAnimation sa = childGO.AddComponent<SkeletonAnimation>();
-
-                    MeshRenderer spineRenderer = sa.GetComponent<MeshRenderer>();
-
-                    spineRenderer.sortingOrder = renderOrder;
-
-                    sa.skeletonDataAsset = sda;
-
-                    sa.loop = true;
-
-                    string defaultAnimation = "animation";
-
-                    //Debug.Log(id + " " + sda.GetAnimationStateData().SkeletonData.Animations.Count);
-
-                    if (sda.GetAnimationStateData().SkeletonData.Animations.Count > 0)
-                    {
-                        Animation[] animationList = sda.GetAnimationStateData().SkeletonData.Animations.ToArray();
-                        defaultAnimation = animationList[0].Name;
-                    }
-
-                    if (spineInfo.ContainsKey("defaultAnimation"))
-                    {
-                        defaultAnimation = (string)spineInfo["defaultAnimation"];
-                    }
-
-                    if (spineInfo.ContainsKey("skin"))
-                    {
-                        string initialSkin = (string)spineInfo["skin"];
-
-                        sa.initialSkinName = initialSkin;
-                    }
-
-                    if (!string.IsNullOrEmpty(defaultAnimation))
-                    {
-                        sa.AnimationName = defaultAnimation;
-                    }
-
-                    if (spineInfo.ContainsKey("timeScale"))
-                    {
-                        float timeScale = float.Parse("" + spineInfo["timeScale"]);
-
-                        sa.timeScale = timeScale;
-                    }
-
-                    SkeletonUtility su = childGO.AddComponent<SkeletonUtility>();
-
-                    su.SpawnHierarchy(SkeletonUtilityBone.Mode.Follow, true, true, true);
                 }
 
                 if (child.ContainsKey("visible"))
