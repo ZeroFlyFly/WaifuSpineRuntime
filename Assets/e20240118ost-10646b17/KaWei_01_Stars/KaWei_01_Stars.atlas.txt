@@ -1,0 +1,34 @@
+KaWei_01_Stars.png
+size:229,168
+filter:Linear,Linear
+星星1
+bounds:102,8,53,77
+rotate:90
+星星2
+bounds:3,36,61,96
+offsets:3,0,68,96
+rotate:90
+星星3
+bounds:182,36,36,60
+offsets:2,0,39,60
+星星3 拷贝
+bounds:182,6,27,44
+offsets:1,0,29,44
+rotate:90
+星星3 拷贝 2
+bounds:53,5,28,46
+rotate:90
+星星4
+bounds:3,100,65,108
+offsets:0,0,69,108
+rotate:90
+星星5
+bounds:182,99,40,66
+offsets:3,0,45,66
+星星5 拷贝
+bounds:3,3,30,47
+offsets:1,0,32,47
+rotate:90
+星星6
+bounds:114,64,65,101
+offsets:0,0,70,101

@@ -1,0 +1,9 @@
+yaoyao_tx.png
+size:311,116
+filter:Linear,Linear
+yaoyao_tx
+bounds:1,1,309,114
+图层 1
+bounds:1,90,23,25
+图层 2
+bounds:27,93,24,22

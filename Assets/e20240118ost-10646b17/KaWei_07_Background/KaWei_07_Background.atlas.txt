@@ -1,0 +1,50 @@
+KaWei_07_Background.png
+size:969,649
+filter:Linear,Linear
+云1
+bounds:656,460,262,187
+云2
+bounds:319,528,120,129
+rotate:90
+云3
+bounds:449,489,205,159
+压暗 拷贝 10
+bounds:60,639,9,17
+rotate:90
+压暗 拷贝 11
+bounds:21,643,4,4
+压暗 拷贝 12
+bounds:1,645,3,3
+offsets:0,0,3,3
+压暗 拷贝 13
+bounds:6,645,3,3
+压暗 拷贝 14
+bounds:10,645,3,3
+压暗 拷贝 2
+bounds:39,643,5,5
+rotate:90
+压暗 拷贝 3
+bounds:27,643,5,4
+压暗 拷贝 4
+bounds:79,638,10,19
+offsets:0,0,10,19
+rotate:90
+压暗 拷贝 5
+bounds:53,642,5,5
+压暗 拷贝 6
+bounds:100,637,12,11
+压暗 拷贝 7
+bounds:46,643,5,5
+压暗 拷贝 8
+bounds:15,644,4,4
+压暗 拷贝 9
+bounds:33,643,4,4
+流星1
+bounds:113,608,49,39
+流星2
+bounds:233,577,84,70
+流星3
+bounds:164,593,67,55
+背景
+bounds:1,1,457,966
+rotate:90

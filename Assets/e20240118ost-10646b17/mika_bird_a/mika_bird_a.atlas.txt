@@ -1,0 +1,21 @@
+mika_bird_a.png
+size:81,136
+filter:Linear,Linear
+图层 1
+bounds:1,41,58,44
+图层 3
+bounds:1,7,35,50
+rotate:270
+图层 4
+bounds:45,1,39,28
+rotate:90
+图层 5
+bounds:65,97,8,9
+图层 6
+bounds:61,42,19,23
+rotate:180
+图层 7
+bounds:1,86,62,49
+图层 8
+bounds:51,69,25,29
+rotate:90

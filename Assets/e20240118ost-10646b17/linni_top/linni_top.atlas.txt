@@ -1,0 +1,19 @@
+linni_top.png
+size:464,820
+filter:Linear,Linear
+scale:0.8
+图层 667
+bounds:167,100,151,294
+rotate:90
+图层 695
+bounds:3,455,362,285
+offsets:204,131,566,416
+rotate:90
+图层 696
+bounds:291,254,563,164
+rotate:90
+星星挂坠1
+bounds:3,50,161,402
+星星挂坠2
+bounds:167,3,94,255
+rotate:90

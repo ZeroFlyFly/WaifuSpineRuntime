@@ -1,0 +1,8 @@
+loading_liuxing_b.png
+size:278,208
+filter:Linear,Linear
+loading_liuxing_a
+bounds:0,0,218,208
+xx
+bounds:222,136,72,56
+rotate:90

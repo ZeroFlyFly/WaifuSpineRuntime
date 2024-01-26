@@ -1,0 +1,26 @@
+feimini_paomo.png
+size:123,142
+filter:Linear,Linear
+feimini_paomo - 1
+bounds:97,28,22,30
+feimini_paomo - 10
+bounds:77,101,40,29
+rotate:90
+feimini_paomo - 11
+bounds:36,42,12,11
+feimini_paomo - 12
+bounds:97,5,24,20
+feimini_paomo - 4
+bounds:99,61,23,33
+feimini_paomo - 5
+bounds:1,11,95,130
+feimini_paomo - 6
+bounds:26,1,21,26
+rotate:90
+feimini_paomo - 7
+bounds:55,3,8,9
+feimini_paomo - 8
+bounds:1,18,36,44
+feimini_paomo - 9
+bounds:1,1,19,18
+rotate:90

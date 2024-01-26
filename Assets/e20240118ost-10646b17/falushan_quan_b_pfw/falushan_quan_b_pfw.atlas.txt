@@ -1,0 +1,15 @@
+falushan_quan_b_pfw.png
+size:114,385
+filter:Linear,Linear
+组 25 拷贝
+bounds:1,149,102,96
+offsets:1,1,104,98
+组 25 拷贝 3
+bounds:1,1,77,56
+offsets:1,1,79,58
+组 25 拷贝 4
+bounds:1,60,112,86
+offsets:1,1,114,88
+组 25 拷贝 5
+bounds:1,248,110,136
+offsets:1,1,112,138

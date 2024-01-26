@@ -1,0 +1,5 @@
+02_QiLiangliang_Box.png
+size:218,159
+filter:Linear,Linear
+箱子左2
+bounds:3,3,212,153

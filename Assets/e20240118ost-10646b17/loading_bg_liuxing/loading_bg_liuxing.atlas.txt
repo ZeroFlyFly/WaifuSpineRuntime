@@ -1,0 +1,5 @@
+loading_bg_liuxing.png
+size:16,322
+filter:Linear,Linear
+lx
+bounds:0,0,8,322

@@ -150,20 +150,57 @@ namespace Spine.Unity {
 				case UpdatePhase.World:
 				case UpdatePhase.Complete:
 					if (position)
-						thisTransform.localPosition = new Vector3(bone.AX * positionScale, bone.AY * positionScale,
-							zPosition ? 0 : thisTransform.localPosition.z);
+                    {
+						float x = bone.AX * positionScale;
+						float y = bone.AY * positionScale;
+						float z = zPosition ? 0 : thisTransform.localPosition.z;
+
+						x = float.IsNaN(x) ? 0 : x;
+
+						y = float.IsNaN(y) ? 0 : y;
+
+						z = float.IsNaN(z) ? 0 : z;
+
+						thisTransform.localPosition = new Vector3(x,y,z);
+					}
 
 					if (rotation) {
 						if (bone.Data.TransformMode.InheritsRotation()) {
-							thisTransform.localRotation = Quaternion.Euler(0, 0, bone.AppliedRotation);
+
+							float z = bone.AppliedRotation;
+
+							z = float.IsNaN(z) ? 0 : z;
+
+							thisTransform.localRotation = Quaternion.Euler(0, 0, z);
 						} else {
 							Vector3 euler = skeletonTransform.rotation.eulerAngles;
-							thisTransform.rotation = Quaternion.Euler(euler.x, euler.y, euler.z + (bone.WorldRotationX * skeletonFlipRotation));
+
+							float x = euler.x;
+							float y = euler.y;
+							float z = euler.z + (bone.WorldRotationX * skeletonFlipRotation);
+
+							x = float.IsNaN(x) ? 0 : x;
+
+							y = float.IsNaN(y) ? 0 : y;
+
+							z = float.IsNaN(z) ? 0 : z;
+
+							thisTransform.rotation = Quaternion.Euler(x,y,z);
 						}
 					}
 
 					if (scale) {
-						thisTransform.localScale = new Vector3(bone.AScaleX, bone.AScaleY, 1f);
+						float x = bone.AScaleX;
+						float y = bone.AScaleY;
+						float z = 1f;
+
+						x = float.IsNaN(x) ? 1 : x;
+
+						y = float.IsNaN(y) ? 1 : y;
+
+						z = float.IsNaN(z) ? 1 : z;
+
+						thisTransform.localScale = new Vector3(x, y, z);
 						incompatibleTransformMode = BoneTransformModeIncompatible(bone);
 					}
 					break;

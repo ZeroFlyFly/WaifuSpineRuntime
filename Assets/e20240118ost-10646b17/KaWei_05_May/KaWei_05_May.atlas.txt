@@ -1,0 +1,15 @@
+KaWei_05_May.png
+size:241,173
+filter:Linear,Linear
+小梅
+bounds:3,3,187,167
+offsets:1,0,188,167
+小梅音符1
+bounds:193,7,40,48
+小梅音符2
+bounds:193,58,63,43
+rotate:90
+小梅音符3
+bounds:193,124,46,45
+offsets:0,0,47,45
+rotate:90

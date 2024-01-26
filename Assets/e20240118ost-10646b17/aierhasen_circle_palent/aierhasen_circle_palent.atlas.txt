@@ -1,0 +1,5 @@
+aierhasen_circle_palent.png
+size:687,680
+filter:Linear,Linear
+aierhasen_circle_palent
+bounds:1,1,685,678

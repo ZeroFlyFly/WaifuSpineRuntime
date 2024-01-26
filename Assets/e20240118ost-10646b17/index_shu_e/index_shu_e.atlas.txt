@@ -1,0 +1,14 @@
+index_shu_e.png
+size:218,318
+filter:Linear,Linear
+ea
+bounds:76,86,52,137
+offsets:0,2,54,140
+rotate:90
+eb
+bounds:0,0,138,218
+offsets:0,8,140,226
+rotate:90
+ec
+bounds:0,140,193,178
+offsets:5,5,203,188

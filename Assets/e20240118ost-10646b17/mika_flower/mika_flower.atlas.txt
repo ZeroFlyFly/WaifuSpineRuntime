@@ -1,0 +1,53 @@
+mika_flower.png
+size:1432,875
+filter:Linear,Linear
+叶子1
+bounds:0,348,761,526
+叶子2
+bounds:380,173,381,268
+rotate:180
+叶子3 - 1
+bounds:164,465,68,154
+offsets:2,0,71,155
+叶子3 - 2
+bounds:402,447,102,88
+offsets:0,7,102,96
+叶子3 - 4
+bounds:220,806,98,68
+offsets:1,4,101,77
+叶子3 - 5
+bounds:106,445,81,105
+offsets:6,4,91,112
+叶子3 - 6
+bounds:408,504,121,77
+offsets:2,2,123,82
+叶子4 - 1
+bounds:808,0,413,623
+rotate:90
+叶子4 - 2
+bounds:0,88,247,310
+rotate:90
+叶子5 - 1
+bounds:732,320,599,554
+叶子5 - 2
+bounds:764,243,242,408
+offsets:7,0,249,408
+rotate:270
+叶子6
+bounds:228,79,560,591
+rotate:90
+花1
+bounds:608,749,122,125
+offsets:5,2,130,128
+花2
+bounds:124,792,100,82
+offsets:9,6,114,91
+花3
+bounds:1334,527,91,105
+offsets:0,0,92,107
+花5
+bounds:1296,777,96,98
+花6
+bounds:1333,634,98,95
+花7
+bounds:0,763,121,112

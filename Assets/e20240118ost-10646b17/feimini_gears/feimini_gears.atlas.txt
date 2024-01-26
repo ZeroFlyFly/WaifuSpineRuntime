@@ -1,0 +1,16 @@
+feimini_gears.png
+size:255,677
+filter:Linear,Linear
+yy1
+bounds:1,401,246,275
+yy2
+bounds:1,181,217,253
+rotate:90
+齿轮1
+bounds:154,1,81,83
+rotate:90
+齿轮2
+bounds:1,28,150,150
+offsets:0,1,151,151
+齿轮3
+bounds:154,85,94,93

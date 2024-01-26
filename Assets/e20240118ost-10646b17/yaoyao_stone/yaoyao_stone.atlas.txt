@@ -1,0 +1,8 @@
+yaoyao_stone.png
+size:374,310
+filter:Linear,Linear
+图层 609
+bounds:1,1,270,308
+图层 611
+bounds:274,17,292,99
+rotate:90

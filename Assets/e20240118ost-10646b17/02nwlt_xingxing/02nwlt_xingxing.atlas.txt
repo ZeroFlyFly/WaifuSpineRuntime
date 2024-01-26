@@ -1,0 +1,12 @@
+02nwlt_xingxing.png
+size:212,79
+filter:Linear,Linear
+02nwlt_xingxing_a
+bounds:156,19,56,60
+offsets:1,1,58,62
+02nwlt_xingxing_b
+bounds:81,0,63,79
+offsets:1,1,65,81
+02nwlt_xingxing_c
+bounds:0,1,69,78
+offsets:1,1,71,80

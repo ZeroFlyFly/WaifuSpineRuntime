@@ -1,0 +1,11 @@
+aierhasen_bubbles.png
+size:40,118
+filter:Linear,Linear
+aierhaisen_pp_a
+bounds:1,1,32,25
+offsets:0,0,33,25
+aierhaisen_pp_b
+bounds:1,70,38,47
+offsets:0,0,38,48
+aierhaisen_pp_c
+bounds:1,28,36,40

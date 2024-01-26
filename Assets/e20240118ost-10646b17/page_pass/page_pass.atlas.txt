@@ -1,0 +1,5 @@
+page_pass.png
+size:427,824
+filter:Linear,Linear
+funina_mubu
+bounds:0,0,427,824

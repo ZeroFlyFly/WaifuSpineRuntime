@@ -1,0 +1,8 @@
+feimini_jellyfish_c.png
+size:142,72
+filter:Linear,Linear
+1
+bounds:1,2,66,69
+2
+bounds:65,1,70,76
+rotate:90

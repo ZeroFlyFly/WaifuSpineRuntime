@@ -1,0 +1,7 @@
+feimini_grass_a.png
+size:504,264
+filter:Linear,Linear
+1
+bounds:62,116,337,147
+2
+bounds:1,1,502,262

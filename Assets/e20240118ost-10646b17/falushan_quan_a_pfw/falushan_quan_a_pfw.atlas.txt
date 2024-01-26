@@ -1,0 +1,6 @@
+falushan_quan_a_pfw.png
+size:111,96
+filter:Linear,Linear
+falushan_quan_a_pfw1
+bounds:1,1,109,94
+offsets:1,1,111,96

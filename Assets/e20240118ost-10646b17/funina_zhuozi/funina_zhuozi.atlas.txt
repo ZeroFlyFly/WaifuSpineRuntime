@@ -1,0 +1,17 @@
+funina_zhuozi.png
+size:409,723
+filter:Linear,Linear
+yy
+bounds:0,0,121,92
+yya
+bounds:361,84,114,48
+rotate:90
+yyb
+bounds:227,210,138,56
+zhuozi
+bounds:0,322,399,401
+壶
+bounds:0,104,206,215
+rotate:90
+茶杯
+bounds:227,104,122,94

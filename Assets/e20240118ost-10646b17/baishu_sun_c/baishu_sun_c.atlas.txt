@@ -1,0 +1,8 @@
+baishu_sun_c.png
+size:179,519
+filter:Linear,Linear
+图层 127 拷贝 2
+bounds:1,1,177,270
+rotate:180
+图层 175 拷贝
+bounds:1,248,177,270

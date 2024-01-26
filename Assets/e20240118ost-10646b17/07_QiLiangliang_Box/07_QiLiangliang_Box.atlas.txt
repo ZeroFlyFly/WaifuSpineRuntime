@@ -1,0 +1,6 @@
+07_QiLiangliang_Box.png
+size:195,230
+filter:Linear,Linear
+箱子右2
+bounds:3,3,189,224
+offsets:2,2,193,228

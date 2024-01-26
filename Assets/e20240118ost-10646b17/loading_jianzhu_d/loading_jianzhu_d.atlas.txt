@@ -1,0 +1,13 @@
+loading_jianzhu_d.png
+size:401,257
+filter:Linear,Linear
+da
+bounds:174,0,257,118
+offsets:5,5,267,128
+rotate:90
+db
+bounds:0,66,172,191
+offsets:5,5,182,201
+dc
+bounds:294,71,107,186
+offsets:5,5,117,196
