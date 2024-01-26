@@ -195,7 +195,7 @@ namespace SharpJson {
 						break;
 					}
 				} 
-				else if(bracketStart == '@' && c == '[')
+				/*else if(bracketStart == '@' && c == '[')
                 {
 					isinStringList = true;
 					bracketStart = '[';
@@ -214,7 +214,7 @@ namespace SharpJson {
 				{
 					isinStringList = false;
 					bracketStart = '@';
-				}
+				}*/
 				else {
 					stringBuffer[idx++] = c;
 				}

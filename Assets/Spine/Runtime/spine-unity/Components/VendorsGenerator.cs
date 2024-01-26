@@ -488,10 +488,14 @@ namespace Spine.Unity
 
                             Material relateMaterial = null;
 
+                            bool isBezierMaterial = false;
+
                             if (!File.Exists(relativeMaterialPath))
                             {
                                 if (materialStrID.Equals("BEZIER_PARTICLE"))
                                 {
+                                    isBezierMaterial = true;
+
                                     Material defautMaterial = AssetDatabase.LoadAssetAtPath("Assets/Spine/Editor/spine-unity/Editor/Shaders/BezierParticleMaterial.mat", typeof(Material)) as Material;
                                     relateMaterial = new Material(defautMaterial);
                                 }
@@ -776,34 +780,37 @@ namespace Spine.Unity
 
                             relateMaterial = AssetDatabase.LoadAssetAtPath(relativeMaterialPath, typeof(Material)) as Material;
 
-                            if(child.ContainsKey("pluginId") && child.ContainsKey("userData"))
+                            if(isBezierMaterial)
                             {
-                                string pluginID = "" + child["pluginId"];
-
-                                Dictionary<string, object> userDataDict = (Dictionary<string, object>)child["userData"];
-
-                                if (userDataDict.ContainsKey("pluginData"))
+                                if (child.ContainsKey("pluginId") && child.ContainsKey("userData"))
                                 {
-                                    Dictionary<string, object> pluginDataDict = (Dictionary<string, object>)userDataDict["pluginData"];
+                                    string pluginID = "" + child["pluginId"];
 
-                                    int count = 0;
+                                    Dictionary<string, object> userDataDict = (Dictionary<string, object>)child["userData"];
 
-                                    if (pluginDataDict.ContainsKey("count"))
+                                    if (userDataDict.ContainsKey("pluginData"))
                                     {
-                                        count = int.Parse("" + pluginDataDict["count"]);
-                                    }
+                                        Dictionary<string, object> pluginDataDict = (Dictionary<string, object>)userDataDict["pluginData"];
 
-                                    if(count > 0)
-                                    {
-                                        DrawSpineParticleInstance dspi = childGO.AddComponent<DrawSpineParticleInstance>();
+                                        int count = 0;
 
-                                        dspi.population = count;
-
-                                        dspi.material = relateMaterial;
-
-                                        if (generateMesh != null)
+                                        if (pluginDataDict.ContainsKey("count"))
                                         {
-                                            generateMesh.enabled = false;
+                                            count = int.Parse("" + pluginDataDict["count"]);
+                                        }
+
+                                        if (count > 0)
+                                        {
+                                            DrawSpineParticleInstance dspi = childGO.AddComponent<DrawSpineParticleInstance>();
+
+                                            dspi.population = count;
+
+                                            dspi.material = relateMaterial;
+
+                                            if (generateMesh != null)
+                                            {
+                                                generateMesh.enabled = false;
+                                            }
                                         }
                                     }
                                 }
