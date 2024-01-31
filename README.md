@@ -2,7 +2,7 @@
 
 [For English User](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/README_en.md)
 
-**spine-unity** 是一个Unity插件可以，目的是在[Unity](http://unity3d.com/)中加载并播放 [Spine](http://esotericsoftware.com) 骨骼动画。 
+**spine-unity** 是一个Unity插件，目的是在[Unity](http://unity3d.com/)中加载并播放 [Spine](http://esotericsoftware.com) 骨骼动画。 
 
 不过和官方的版本比起来，我添加了一些功能
 
@@ -26,9 +26,9 @@
 ![Transparent_Settings](https://github.com/ZeroFlyFly/WaifuSpineRuntime/blob/main/ScreenShot/Transparent_Settings.jpg)
 
 
-    一些提示:
+    提示:
     
-      如果你不清楚为什么要怎么做
+      如果你不清楚为什么要这么做
       
       可以阅读官方文档 [Spine-Unity-Document](https://esotericsoftware.com/spine-unity) 特别是 **Alpha Texture Settings** 部分.
 
