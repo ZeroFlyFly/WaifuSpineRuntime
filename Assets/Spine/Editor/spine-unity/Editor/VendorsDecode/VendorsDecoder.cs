@@ -1210,6 +1210,8 @@ public class VendorsDecoder : EditorWindow
 
                 json = json.Replace("4.0-from-", "");
 
+                json = json.Replace("4.1-from-", "");
+
                 string s = atlasOrder[i];
 
                 NAME_TO_MANIFESTLIST[s][0].jsonString = json;
@@ -1284,6 +1286,8 @@ public class VendorsDecoder : EditorWindow
                                 string jsonText = File.ReadAllText(jsonSaveFile, Encoding.UTF8);
 
                                 jsonText = jsonText.Replace("4.0-from-", "");
+
+                                jsonText = jsonText.Replace("4.1-from-", "");
 
                                 File.WriteAllText(jsonSaveFile, jsonText);
 
@@ -1430,6 +1434,8 @@ public class VendorsDecoder : EditorWindow
 
                                             jsonText = jsonText.Replace("4.0-from-", "");
 
+                                            jsonText = jsonText.Replace("4.1-from-", "");
+
                                             File.WriteAllText(jsonSaveFile, jsonText);
 
                                             //Thread.Sleep(UnityEngine.Random.Range(8, 15));
@@ -1539,6 +1545,8 @@ public class VendorsDecoder : EditorWindow
                                     string jsonText = File.ReadAllText(jsonSaveFile, Encoding.UTF8);
 
                                     jsonText = jsonText.Replace("4.0-from-", "");
+
+                                    jsonText = jsonText.Replace("4.1-from-", "");
 
                                     File.WriteAllText(jsonSaveFile, jsonText);
 
