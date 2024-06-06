@@ -223,10 +223,10 @@ namespace Spine.Unity
 
                             for(int j = 0; j < curMatrix.Count; j += 4)
                             {
-                                float x = (float)curMatrix[i];
-                                float y = (float)curMatrix[i + 1];
-                                float z = (float)curMatrix[i + 2];
-                                float w = (float)curMatrix[i + 2];
+                                float x = (float)curMatrix[j];
+                                float y = (float)curMatrix[j + 1];
+                                float z = (float)curMatrix[j + 2];
+                                float w = (float)curMatrix[j + 3];
 
                                 vectorList.Add(new Vector4(x, y, z, w));
                             }
