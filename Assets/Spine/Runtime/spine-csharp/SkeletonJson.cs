@@ -1202,7 +1202,7 @@ namespace Spine {
 				}
 			}
 
-						// Deform timelines. (Only MiHoyo Use it. Why ? )
+			// Deform timelines. Usually Use In Spine Before 3.8
 			if (map.ContainsKey("deform"))
 			{
 				foreach (KeyValuePair<string, Object> attachmentsMap in (Dictionary<string, Object>)map["deform"])
@@ -1219,8 +1219,10 @@ namespace Spine {
 
 							List<object> values = (List<Object>)attachmentMap.Value;
 							List<object>.Enumerator keyMapEnumerator = values.GetEnumerator();
+
 							if (!keyMapEnumerator.MoveNext()) continue;
 							Dictionary<string, object> keyMap = (Dictionary<string, Object>)keyMapEnumerator.Current;
+
 							int frames = values.Count;
 							string timelineName = attachmentMap.Key;
 							//if (timelineName == "deform")
@@ -1265,10 +1267,12 @@ namespace Spine {
 										break;
 									}
 									Dictionary<string, object> nextMap = (Dictionary<string, Object>)keyMapEnumerator.Current;
+
 									float time2 = GetFloat(nextMap, "time", 0);
 									if (keyMap.ContainsKey("curve"))
 									{
-										object curve = keyMap["curve"];
+										object curve = CalculateCurve(1, keyMap, time, time2, 0, 1);
+
 										bezier = ReadCurve(curve, timeline, bezier, frame, 0, time, time2, 0, 1, 1);
 									}
 									time = time2;
