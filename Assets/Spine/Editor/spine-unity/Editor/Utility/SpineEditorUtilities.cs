@@ -75,6 +75,10 @@ namespace Spine.Unity.Editor {
 		public static bool initialized;
 		private static List<string> texturesWithoutMetaFile = new List<string>();
 
+		public static void OnTextureImportedFirstTime (string texturePath) {
+			texturesWithoutMetaFile.Add(texturePath);
+		}
+
 		// Auto-import entry point for textures
 		void OnPreprocessTexture () {
 #if UNITY_2018_1_OR_NEWER
@@ -172,15 +176,14 @@ namespace Spine.Unity.Editor {
 
 			if (EditorApplication.isPlayingOrWillChangePlaymode) return;
 
-			string[] folders = { "Assets", "Packages" };
 			string[] assets;
 			string assetPath;
-			assets = AssetDatabase.FindAssets("t:texture icon-subMeshRenderer", folders);
+			assets = AssetDatabase.FindAssets("t:texture icon-subMeshRenderer", null);
 			if (assets.Length > 0) {
 				assetPath = AssetDatabase.GUIDToAssetPath(assets[0]);
 				editorGUIPath = Path.GetDirectoryName(assetPath).Replace('\\', '/');
 			}
-			assets = AssetDatabase.FindAssets("t:script SpineEditorUtilities", folders);
+			assets = AssetDatabase.FindAssets("t:script SpineEditorUtilities", null);
 			if (assets.Length > 0) {
 				assetPath = AssetDatabase.GUIDToAssetPath(assets[0]);
 				editorPath = Path.GetDirectoryName(assetPath).Replace('\\', '/');
@@ -544,6 +547,16 @@ namespace Spine.Unity.Editor {
 				return isLastNode;
 			}
 #endif
+		}
+	}
+
+	public class SpineAssetModificationProcessor : UnityEditor.AssetModificationProcessor {
+		static void OnWillCreateAsset (string assetName) {
+			// Note: This method seems to be called from the main thread,
+			// not from worker threads when Project Settings - Editor - Parallel Import is enabled.
+			int endIndex = assetName.LastIndexOf(".meta");
+			string assetPath = endIndex < 0 ? assetName : assetName.Substring(0, endIndex);
+			SpineEditorUtilities.OnTextureImportedFirstTime(assetPath);
 		}
 	}
 

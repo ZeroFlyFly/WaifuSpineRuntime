@@ -17,6 +17,7 @@ Shader "Spine/Skeleton Tint" {
 
 		// Outline properties are drawn via custom editor.
 		[HideInInspector] _OutlineWidth("Outline Width", Range(0,8)) = 3.0
+		[HideInInspector][MaterialToggle(_USE_SCREENSPACE_OUTLINE_WIDTH)] _UseScreenSpaceOutlineWidth("Width in Screen Space", Float) = 0
 		[HideInInspector] _OutlineColor("Outline Color", Color) = (1,1,0,1)
 		[HideInInspector] _OutlineReferenceTexWidth("Reference Texture Width", Int) = 1024
 		[HideInInspector] _ThresholdEnd("Outline Threshold", Range(0,1)) = 0.25
@@ -79,7 +80,7 @@ Shader "Spine/Skeleton Tint" {
 
 			float4 frag (VertexOutput i) : SV_Target {
 				float4 texColor = tex2D(_MainTex, i.uv);
-				return fragTintedColor(texColor, _Black.rgb, i.vertexColor, _Color.a, _Black.a);
+				return fragTintedColor(texColor, _Black.rgb * i.vertexColor.a, i.vertexColor, _Color.a, _Black.a);
 			}
 			ENDCG
 		}

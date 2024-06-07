@@ -53,6 +53,7 @@ namespace Spine {
 		public const int BONE_SHEAR = 7;
 		public const int BONE_SHEARX = 8;
 		public const int BONE_SHEARY = 9;
+		public const int BONE_INHERIT = 10;
 
 		public const int SLOT_ATTACHMENT = 0;
 		public const int SLOT_RGBA = 1;
@@ -121,14 +122,6 @@ namespace Spine {
 			}
 		}
 #endif // WINDOWS_STOREAPP
-
-		public static readonly TransformMode[] TransformModeValues = {
-			TransformMode.Normal,
-			TransformMode.OnlyTranslation,
-			TransformMode.NoRotationOrReflection,
-			TransformMode.NoScale,
-			TransformMode.NoScaleOrReflection
-		};
 
 		/// <summary>Returns the version string of binary skeleton data.</summary>
 		public static string GetVersionString (Stream file) {
@@ -223,7 +216,7 @@ namespace Spine {
 				data.shearX = input.ReadFloat();
 				data.shearY = input.ReadFloat();
 				data.Length = input.ReadFloat() * scale;
-				data.transformMode = TransformModeValues[input.ReadInt(true)];
+				data.inherit = InheritEnum.Values[input.ReadInt(true)];
 				if (actualVersionID > 37)
                 {
 					data.skinRequired = input.ReadBoolean();
@@ -336,6 +329,18 @@ namespace Spine {
 						data.relative = input.ReadBoolean();
 					}
 
+					data.offsetRotation = input.ReadFloat();
+					data.offsetX = input.ReadFloat() * scale;
+					data.offsetY = input.ReadFloat() * scale;
+					data.offsetScaleX = input.ReadFloat();
+					data.offsetScaleY = input.ReadFloat();
+					data.offsetShearY = input.ReadFloat();
+					data.mixRotate = input.ReadFloat();
+					data.mixX = input.ReadFloat();
+					data.mixY = isOldAnimCurveSpine ? data.mixX : input.ReadFloat();
+					data.mixScaleX = input.ReadFloat();
+					data.mixScaleY = isOldAnimCurveSpine ? data.mixScaleX : input.ReadFloat();
+					data.mixShearY = input.ReadFloat();
 				}
 				else
 				{
@@ -343,20 +348,21 @@ namespace Spine {
 					data.skinRequired = (flags & 1) != 0;
 					data.local = (flags & 2) != 0;
 					data.relative = (flags & 4) != 0;
+
+					if ((flags & 8) != 0) data.offsetRotation = input.ReadFloat();
+					if ((flags & 16) != 0) data.offsetX = input.ReadFloat() * scale;
+					if ((flags & 32) != 0) data.offsetY = input.ReadFloat() * scale;
+					if ((flags & 64) != 0) data.offsetScaleX = input.ReadFloat();
+					if ((flags & 128) != 0) data.offsetScaleY = input.ReadFloat();
+					flags = input.Read();
+					if ((flags & 1) != 0) data.offsetShearY = input.ReadFloat();
+					if ((flags & 2) != 0) data.mixRotate = input.ReadFloat();
+					if ((flags & 4) != 0) data.mixX = input.ReadFloat();
+					if ((flags & 8) != 0) data.mixY = input.ReadFloat();
+					if ((flags & 16) != 0) data.mixScaleX = input.ReadFloat();
+					if ((flags & 32) != 0) data.mixScaleY = input.ReadFloat();
+					if ((flags & 64) != 0) data.mixShearY = input.ReadFloat();
 				}
-				
-				data.offsetRotation = input.ReadFloat();
-				data.offsetX = input.ReadFloat() * scale;
-				data.offsetY = input.ReadFloat() * scale;
-				data.offsetScaleX = input.ReadFloat();
-				data.offsetScaleY = input.ReadFloat();
-				data.offsetShearY = input.ReadFloat();
-				data.mixRotate = input.ReadFloat();
-				data.mixX = input.ReadFloat();
-				data.mixY = isOldAnimCurveSpine ? data.mixX : input.ReadFloat();
-				data.mixScaleX = input.ReadFloat();
-				data.mixScaleY = isOldAnimCurveSpine ? data.mixScaleX : input.ReadFloat();
-				data.mixShearY = input.ReadFloat();
 				o[i] = data;
 			}
 
@@ -373,10 +379,23 @@ namespace Spine {
 				for (int ii = 0; ii < nn; ii++)
 					constraintBones[ii] = bones[input.ReadInt(true)];
 				data.target = slots[input.ReadInt(true)];
-				data.positionMode = (PositionMode)Enum.GetValues(typeof(PositionMode)).GetValue(input.ReadInt(true));
-				data.spacingMode = (SpacingMode)Enum.GetValues(typeof(SpacingMode)).GetValue(input.ReadInt(true));
-				data.rotateMode = (RotateMode)Enum.GetValues(typeof(RotateMode)).GetValue(input.ReadInt(true));
-				data.offsetRotation = input.ReadFloat();
+				
+				if (actualVersionID < 42)
+				{
+					data.positionMode = (PositionMode)Enum.GetValues(typeof(PositionMode)).GetValue(input.ReadInt(true));
+					data.spacingMode = (SpacingMode)Enum.GetValues(typeof(SpacingMode)).GetValue(input.ReadInt(true));
+					data.rotateMode = (RotateMode)Enum.GetValues(typeof(RotateMode)).GetValue(input.ReadInt(true));
+					data.offsetRotation = input.ReadFloat();
+				}
+				else
+				{
+					int flags = input.Read();
+					data.positionMode = (PositionMode)Enum.GetValues(typeof(PositionMode)).GetValue(flags & 1);
+					data.spacingMode = (SpacingMode)Enum.GetValues(typeof(SpacingMode)).GetValue((flags >> 1) & 3);
+					data.rotateMode = (RotateMode)Enum.GetValues(typeof(RotateMode)).GetValue((flags >> 3) & 3);
+					if ((flags & 128) != 0) data.offsetRotation = input.ReadFloat();
+				}
+				
 				data.position = input.ReadFloat();
 				if (data.positionMode == PositionMode.Fixed) data.position *= scale;
 				data.spacing = input.ReadFloat();
@@ -384,6 +403,7 @@ namespace Spine {
 				data.mixRotate = input.ReadFloat();
 				data.mixX = input.ReadFloat();
 				data.mixY = isOldAnimCurveSpine ? data.mixX : input.ReadFloat();
+				
 				o[i] = data;
 			}
 			

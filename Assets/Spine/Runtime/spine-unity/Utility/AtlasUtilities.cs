@@ -361,12 +361,15 @@ namespace Spine.Unity.AttachmentTools {
 						originalAttachment.Copy();
 					IHasTextureRegion newTextureAttachment = (IHasTextureRegion)newAttachment;
 					AtlasRegion region = newTextureAttachment.Region as AtlasRegion;
+					if (region == null && originalTextureAttachment.Sequence != null)
+						region = (AtlasRegion)originalTextureAttachment.Sequence.Regions[0];
+
 					int existingIndex;
 					if (existingRegions.TryGetValue(region, out existingIndex)) {
 						regionIndices.Add(existingIndex);
 					} else {
-						Sequence originalSequence = originalTextureAttachment.Sequence;
 						existingRegions.Add(region, newRegionIndex);
+						Sequence originalSequence = originalTextureAttachment.Sequence;
 						if (originalSequence != null) {
 							newTextureAttachment.Sequence = new Sequence(originalSequence);
 							for (int i = 0, regionCount = originalSequence.Regions.Length; i < regionCount; ++i) {
@@ -709,7 +712,7 @@ namespace Spine.Unity.AttachmentTools {
 
 		/// <summary>
 		/// Gets the Rect of an AtlasRegion according to Unity texture coordinates (x-right, y-up).</summary>
-		static Rect GetUnityRect (this AtlasRegion region, float textureHeight) {
+		static Rect GetUnityRect (this AtlasRegion region, int textureHeight) {
 			return region.GetSpineAtlasRect().SpineUnityFlipRect(textureHeight);
 		}
 
@@ -776,11 +779,12 @@ namespace Spine.Unity.AttachmentTools {
 			float v2 = uvRect.yMin;
 
 			if (referenceRegion.degrees == 270) {
-				// at a 270 degree region, u2/v2 deltas are swapped, and delta-v is negative.
-				float du = u2 - u;
-				float dv = v - v2;
-				u2 = u + dv;
-				v2 = v - du;
+				// at a 270 degree region, u2/v2 deltas and atlas width/height are swapped, and delta-v is negative.
+				float du = uvRect.width; // u2 - u;
+				float dv = uvRect.height; // v - v2;
+				float atlasAspectRatio = (float)page.width / (float)page.height;
+				u2 = u + (dv / atlasAspectRatio);
+				v2 = v - (du * atlasAspectRatio);
 			}
 
 			return new AtlasRegion {

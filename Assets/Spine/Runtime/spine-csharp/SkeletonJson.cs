@@ -132,8 +132,8 @@ namespace Spine {
 					data.shearX = GetFloat(boneMap, "shearX", 0);
 					data.shearY = GetFloat(boneMap, "shearY", 0);
 
-					string tm = GetString(boneMap, "transform", TransformMode.Normal.ToString());
-					data.transformMode = (TransformMode)Enum.Parse(typeof(TransformMode), tm, true);
+					string inheritString = GetString(boneMap, "inherit", Inherit.Normal.ToString());
+					data.inherit = (Inherit)Enum.Parse(typeof(Inherit), inheritString, true);
 					data.skinRequired = GetBoolean(boneMap, "skin", false);
 
 					skeletonData.bones.Add(data);
@@ -294,6 +294,7 @@ namespace Spine {
 					data.rotate = GetFloat(constraintMap, "rotate", 0);
 					data.scaleX = GetFloat(constraintMap, "scaleX", 0);
 					data.shearX = GetFloat(constraintMap, "shearX", 0);
+					data.limit = GetFloat(constraintMap, "limit", 5000) * scale;
 					data.step = 1f / GetInt(constraintMap, "fps", 60);
 					data.inertia = GetFloat(constraintMap, "inertia", 1);
 					data.strength = GetFloat(constraintMap, "strength", 100);

@@ -31,6 +31,7 @@ using System;
 
 namespace Spine {
 	public class Skeleton {
+		static private readonly int[] quadTriangles = { 0, 1, 2, 2, 3, 0 };
 		internal SkeletonData data;
 		internal ExposedList<Bone> bones;
 		internal ExposedList<Slot> slots;
@@ -43,9 +44,9 @@ namespace Spine {
 		internal ExposedList<IUpdatable> updateCache = new ExposedList<IUpdatable>();
 		internal Skin skin;
 		internal float r = 1, g = 1, b = 1, a = 1;
-		internal float x, y;
-		internal float scaleX = 1, scaleY = 1;
-		internal float time;
+		internal float x, y, scaleX = 1, time;
+		/// <summary>Private to enforce usage of ScaleY getter taking Bone.yDown into account.</summary>
+		private float scaleY = 1;
 
 		/// <summary>The skeleton's setup pose data.</summary>
 		public SkeletonData Data { get { return data; } }
@@ -192,19 +193,19 @@ namespace Spine {
 
 			ikConstraints = new ExposedList<IkConstraint>(skeleton.ikConstraints.Count);
 			foreach (IkConstraint ikConstraint in skeleton.ikConstraints)
-				ikConstraints.Add(new IkConstraint(ikConstraint));
+				ikConstraints.Add(new IkConstraint(ikConstraint, skeleton));
 
 			transformConstraints = new ExposedList<TransformConstraint>(skeleton.transformConstraints.Count);
 			foreach (TransformConstraint transformConstraint in skeleton.transformConstraints)
-				transformConstraints.Add(new TransformConstraint(transformConstraint));
+				transformConstraints.Add(new TransformConstraint(transformConstraint, skeleton));
 
 			pathConstraints = new ExposedList<PathConstraint>(skeleton.pathConstraints.Count);
 			foreach (PathConstraint pathConstraint in skeleton.pathConstraints)
-				pathConstraints.Add(new PathConstraint(pathConstraint));
+				pathConstraints.Add(new PathConstraint(pathConstraint, skeleton));
 
 			physicsConstraints = new ExposedList<PhysicsConstraint>(skeleton.physicsConstraints.Count);
 			foreach (PhysicsConstraint physicsConstraint in skeleton.physicsConstraints)
-				physicsConstraints.Add(new PhysicsConstraint(physicsConstraint));
+				physicsConstraints.Add(new PhysicsConstraint(physicsConstraint, skeleton));
 
 			skin = skeleton.skin;
 			r = skeleton.r;
@@ -392,11 +393,9 @@ namespace Spine {
 		}
 
 		private void SortPhysicsConstraint (PhysicsConstraint constraint) {
-			constraint.active = !constraint.data.skinRequired || (skin != null && skin.constraints.Contains(constraint.data));
-			if (!constraint.active) return;
-
 			Bone bone = constraint.bone;
-			constraint.active = bone.active;
+			constraint.active = bone.active
+				&& (!constraint.data.skinRequired || (skin != null && skin.constraints.Contains(constraint.data)));
 			if (!constraint.active) return;
 
 			SortBone(bone);
@@ -481,6 +480,24 @@ namespace Spine {
 			}
 		}
 
+		/// <summary>
+		/// Calls <see cref="PhysicsConstraint.Translate(float, float)"/> for each physics constraint.
+		/// </summary>
+		public void PhysicsTranslate (float x, float y) {
+			PhysicsConstraint[] physicsConstraints = this.physicsConstraints.Items;
+			for (int i = 0, n = this.physicsConstraints.Count; i < n; i++)
+				physicsConstraints[i].Translate(x, y);
+		}
+
+		/// <summary>
+		/// Calls <see cref="PhysicsConstraint.Rotate(float, float, float)"/> for each physics constraint.
+		/// </summary>
+		public void PhysicsRotate (float x, float y, float degrees) {
+			PhysicsConstraint[] physicsConstraints = this.physicsConstraints.Items;
+			for (int i = 0, n = this.physicsConstraints.Count; i < n; i++)
+				physicsConstraints[i].Rotate(x, y, degrees);
+		}
+		
 		/// <summary>Increments the skeleton's <see cref="time"/>.</summary>
 		public void Update (float delta) {
 			time += delta;
@@ -691,7 +708,8 @@ namespace Spine {
 		/// <param name="width">The width of the AABB</param>
 		/// <param name="height">The height of the AABB.</param>
 		/// <param name="vertexBuffer">Reference to hold a float[]. May be a null reference. This method will assign it a new float[] with the appropriate size as needed.</param>
-		public void GetBounds (out float x, out float y, out float width, out float height, ref float[] vertexBuffer) {
+		public void GetBounds (out float x, out float y, out float width, out float height, ref float[] vertexBuffer,
+			SkeletonClipping clipper = null) {
 			float[] temp = vertexBuffer;
 			temp = temp ?? new float[8];
 			Slot[] drawOrder = this.drawOrder.Items;
@@ -701,6 +719,7 @@ namespace Spine {
 				if (!slot.bone.active) continue;
 				int verticesLength = 0;
 				float[] vertices = null;
+				int[] triangles = null;
 				Attachment attachment = slot.attachment;
 				RegionAttachment region = attachment as RegionAttachment;
 				if (region != null) {
@@ -708,6 +727,7 @@ namespace Spine {
 					vertices = temp;
 					if (vertices.Length < 8) vertices = temp = new float[8];
 					region.ComputeWorldVertices(slot, temp, 0, 2);
+					triangles = quadTriangles;
 				} else {
 					MeshAttachment mesh = attachment as MeshAttachment;
 					if (mesh != null) {
@@ -715,10 +735,22 @@ namespace Spine {
 						vertices = temp;
 						if (vertices.Length < verticesLength) vertices = temp = new float[verticesLength];
 						mesh.ComputeWorldVertices(slot, 0, verticesLength, temp, 0, 2);
+						triangles = mesh.Triangles;
+					} else if (clipper != null) {
+						ClippingAttachment clip = attachment as ClippingAttachment;
+						if (clip != null) {
+							clipper.ClipStart(slot, clip);
+							continue;
+						}
 					}
 				}
 
 				if (vertices != null) {
+					if (clipper != null && clipper.IsClipping) {
+						clipper.ClipTriangles(vertices, verticesLength, triangles, triangles.Length);
+						vertices = clipper.ClippedVertices.Items;
+						verticesLength = clipper.ClippedVertices.Count;
+					}
 					for (int ii = 0; ii < verticesLength; ii += 2) {
 						float vx = vertices[ii], vy = vertices[ii + 1];
 						minX = Math.Min(minX, vx);
@@ -727,7 +759,9 @@ namespace Spine {
 						maxY = Math.Max(maxY, vy);
 					}
 				}
+				if (clipper != null) clipper.ClipEnd(slot);
 			}
+			if (clipper != null) clipper.ClipEnd();
 			x = minX;
 			y = minY;
 			width = maxX - minX;
