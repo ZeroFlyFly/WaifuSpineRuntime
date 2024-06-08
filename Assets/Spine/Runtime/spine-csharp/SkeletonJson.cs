@@ -108,6 +108,7 @@ namespace Spine {
 				skeletonData.y = GetFloat(skeletonMap, "y", 0);
 				skeletonData.width = GetFloat(skeletonMap, "width", 0);
 				skeletonData.height = GetFloat(skeletonMap, "height", 0);
+				skeletonData.referenceScale = GetFloat(skeletonMap, "referenceScale", 100) * scale;
 				skeletonData.fps = GetFloat(skeletonMap, "fps", 30);
 				skeletonData.imagesPath = GetString(skeletonMap, "images", null);
 				skeletonData.audioPath = GetString(skeletonMap, "audio", null);
@@ -906,7 +907,19 @@ namespace Spine {
 							timelines.Add(ReadTimeline(ref keyMapEnumerator, new ShearXTimeline(frames, frames, boneIndex), 0, 1));
 						else if (timelineName == "sheary")
 							timelines.Add(ReadTimeline(ref keyMapEnumerator, new ShearYTimeline(frames, frames, boneIndex), 0, 1));
-						else
+						else if (timelineName == "inherit") {
+							InheritTimeline timeline = new InheritTimeline(frames, boneIndex);
+							for (int frame = 0; ; frame++) {
+								Dictionary<string, object> keyMap = (Dictionary<string, Object>)keyMapEnumerator.Current;
+								float time = GetFloat(keyMap, "time", 0);
+								Inherit inherit = (Inherit)Enum.Parse(typeof(Inherit), GetString(keyMap, "inherit", Inherit.Normal.ToString()), true);
+								timeline.SetFrame(frame, time, inherit);
+								if (!keyMapEnumerator.MoveNext()) {
+									break;
+								}
+							}
+							timelines.Add(timeline);
+						} else
 							throw new Exception("Invalid timeline type for a bone: " + timelineName + " (" + boneName + ")");
 					}
 				}
