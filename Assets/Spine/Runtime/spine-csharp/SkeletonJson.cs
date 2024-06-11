@@ -133,7 +133,16 @@ namespace Spine {
 					data.shearX = GetFloat(boneMap, "shearX", 0);
 					data.shearY = GetFloat(boneMap, "shearY", 0);
 
-					string inheritString = GetString(boneMap, "inherit", Inherit.Normal.ToString());
+					string inheritString = null;
+
+                    if (boneMap.ContainsKey("transform"))
+                    {
+						inheritString = GetString(boneMap, "transform", Inherit.Normal.ToString());
+					}
+                    else
+                    {
+						inheritString = GetString(boneMap, "inherit", Inherit.Normal.ToString());
+					}
 					data.inherit = (Inherit)Enum.Parse(typeof(Inherit), inheritString, true);
 					data.skinRequired = GetBoolean(boneMap, "skin", false);
 
