@@ -1,7 +1,0 @@
-02nwlt_bg_guan.png
-size:581,537
-filter:Linear,Linear
-scale:0.6
-02nwlt_bg_guan
-bounds:0,0,581,537
-offsets:0,364,581,901

@@ -1,8 +1,0 @@
-baishu_moutain_b.png
-size:497,231
-filter:Linear,Linear
-图层 805
-bounds:417,62,168,79
-rotate:90
-图层 807
-bounds:1,1,413,229

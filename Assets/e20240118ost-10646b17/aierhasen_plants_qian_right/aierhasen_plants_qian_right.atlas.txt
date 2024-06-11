@@ -1,5 +1,0 @@
-aierhasen_plants_qian_right.png
-size:606,530
-filter:Linear,Linear
-图层 4
-bounds:0,0,604,529

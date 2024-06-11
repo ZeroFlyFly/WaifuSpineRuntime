@@ -1,5 +1,0 @@
-content_sound.png
-size:16,33
-filter:Linear,Linear
-图层 2
-bounds:0,0,12,33

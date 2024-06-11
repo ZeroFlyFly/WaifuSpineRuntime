@@ -1,6 +1,0 @@
-https://act.mihoyo.com/act/ys/event/e20240118ost-10646b17/
-vendors_24b9d2414b3fc5885f9f.js
-https://act.mihoyo.com/act/ys/event/e20240118ost-10646b17/vendors_24b9d2414b3fc5885f9f.js
-index_c7b99fe6634fbb892eba.js
-https://act.mihoyo.com/act/ys/event/e20240118ost-10646b17/index_c7b99fe6634fbb892eba.js
-https://act.mihoyo.com/ys/event/e20240118ost-10646b17/index.html

@@ -1,9 +1,0 @@
-08_QiLiangliang_Flower.png
-size:126,56
-filter:Linear,Linear
-花瓣1
-bounds:3,4,66,49
-花瓣2
-bounds:72,3,50,51
-offsets:2,2,54,55
-rotate:90

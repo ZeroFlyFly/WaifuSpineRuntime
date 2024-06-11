@@ -1,6 +1,0 @@
-falushan_quan_b.png
-size:898,1211
-filter:Linear,Linear
-图层 580
-bounds:1,1,896,1209
-offsets:30,0,926,1224

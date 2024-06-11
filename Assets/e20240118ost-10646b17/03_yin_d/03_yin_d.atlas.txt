@@ -1,7 +1,0 @@
-03_yin_d.png
-size:718,735
-filter:Linear,Linear
-scale:0.7
-png/03_yin_d
-bounds:3,3,712,729
-offsets:28,115,755,844

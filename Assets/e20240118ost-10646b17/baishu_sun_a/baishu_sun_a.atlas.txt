@@ -1,7 +1,0 @@
-baishu_sun_a.png
-size:264,295
-filter:Linear,Linear
-图层 127 拷贝 3
-bounds:1,1,175,293
-图层 175 拷贝 5
-bounds:179,1,84,293
