@@ -52,6 +52,11 @@ namespace Spine {
 	/// Runtimes Guide.</para>
 	/// </summary>
 	public class SkeletonJson : SkeletonLoader {
+
+		public bool isOldAnimCurveSpine = false;
+
+		public int actualVersionID = -1;
+
 		private readonly List<LinkedMesh> linkedMeshes = new List<LinkedMesh>();
 
 		public SkeletonJson (AttachmentLoader attachmentLoader)
@@ -104,6 +109,11 @@ namespace Spine {
 				Dictionary<string, object> skeletonMap = (Dictionary<string, Object>)root["skeleton"];
 				skeletonData.hash = (string)skeletonMap["hash"];
 				skeletonData.version = (string)skeletonMap["spine"];
+
+				actualVersionID = SkeletonBinary.GetVersionID(skeletonData.version);
+
+				isOldAnimCurveSpine = skeletonData.version.Length > 13 && actualVersionID < 40;
+
 				skeletonData.x = GetFloat(skeletonMap, "x", 0);
 				skeletonData.y = GetFloat(skeletonMap, "y", 0);
 				skeletonData.width = GetFloat(skeletonMap, "width", 0);
@@ -892,31 +902,42 @@ namespace Spine {
 						int frames = values.Count;
 						string timelineName = (string)timelineEntry.Key;
 						if (timelineName == "rotate")
-							timelines.Add(ReadTimeline(ref keyMapEnumerator, new RotateTimeline(frames, frames, boneIndex), 0, 1));
-						else if (timelineName == "translate") {
+                        {
+							timelines.Add(ReadTimeline(ref keyMapEnumerator, new RotateTimeline(frames, frames, boneIndex), 0, 1, true));
+						}
+						else if (timelineName == "translate") 
+						{
 							TranslateTimeline timeline = new TranslateTimeline(frames, frames << 1, boneIndex);
 							timelines.Add(ReadTimeline(ref keyMapEnumerator, timeline, "x", "y", 0, scale));
-						} else if (timelineName == "translatex") {
-							timelines
-								.Add(ReadTimeline(ref keyMapEnumerator, new TranslateXTimeline(frames, frames, boneIndex), 0, scale));
-						} else if (timelineName == "translatey") {
-							timelines
-								.Add(ReadTimeline(ref keyMapEnumerator, new TranslateYTimeline(frames, frames, boneIndex), 0, scale));
-						} else if (timelineName == "scale") {
+						} 
+						else if (timelineName == "translatex") 
+						{
+							timelines.Add(ReadTimeline(ref keyMapEnumerator, new TranslateXTimeline(frames, frames, boneIndex), 0, scale));
+						} 
+						else if (timelineName == "translatey") 
+						{
+							timelines.Add(ReadTimeline(ref keyMapEnumerator, new TranslateYTimeline(frames, frames, boneIndex), 0, scale));
+						} 
+						else if (timelineName == "scale") 
+						{
 							ScaleTimeline timeline = new ScaleTimeline(frames, frames << 1, boneIndex);
 							timelines.Add(ReadTimeline(ref keyMapEnumerator, timeline, "x", "y", 1, 1));
-						} else if (timelineName == "scalex")
+						} 
+						else if (timelineName == "scalex")
 							timelines.Add(ReadTimeline(ref keyMapEnumerator, new ScaleXTimeline(frames, frames, boneIndex), 1, 1));
 						else if (timelineName == "scaley")
 							timelines.Add(ReadTimeline(ref keyMapEnumerator, new ScaleYTimeline(frames, frames, boneIndex), 1, 1));
-						else if (timelineName == "shear") {
+						else if (timelineName == "shear") 
+						{
 							ShearTimeline timeline = new ShearTimeline(frames, frames << 1, boneIndex);
 							timelines.Add(ReadTimeline(ref keyMapEnumerator, timeline, "x", "y", 0, 1));
-						} else if (timelineName == "shearx")
+						} 
+						else if (timelineName == "shearx")
 							timelines.Add(ReadTimeline(ref keyMapEnumerator, new ShearXTimeline(frames, frames, boneIndex), 0, 1));
 						else if (timelineName == "sheary")
 							timelines.Add(ReadTimeline(ref keyMapEnumerator, new ShearYTimeline(frames, frames, boneIndex), 0, 1));
-						else if (timelineName == "inherit") {
+						else if (timelineName == "inherit") 
+						{
 							InheritTimeline timeline = new InheritTimeline(frames, boneIndex);
 							for (int frame = 0; ; frame++) {
 								Dictionary<string, object> keyMap = (Dictionary<string, Object>)keyMapEnumerator.Current;
@@ -928,7 +949,8 @@ namespace Spine {
 								}
 							}
 							timelines.Add(timeline);
-						} else
+						}
+						else
 							throw new Exception("Invalid timeline type for a bone: " + timelineName + " (" + boneName + ")");
 					}
 				}
@@ -1228,26 +1250,26 @@ namespace Spine {
 			// Deform timelines. Usually Use In Spine Before 3.8
 			if (map.ContainsKey("deform"))
 			{
-				foreach (KeyValuePair<string, Object> attachmentsMap in (Dictionary<string, Object>)map["deform"])
+				foreach (KeyValuePair<string, Object> deformMap in (Dictionary<string, Object>)map["deform"])
 				{
-					Skin skin = skeletonData.FindSkin(attachmentsMap.Key);
-					foreach (KeyValuePair<string, Object> slotMap in (Dictionary<string, Object>)attachmentsMap.Value)
+					Skin skin = skeletonData.FindSkin(deformMap.Key);
+					foreach (KeyValuePair<string, Object> slotMap in (Dictionary<string, Object>)deformMap.Value)
 					{
 						SlotData slot = skeletonData.FindSlot(slotMap.Key);
 						if (slot == null) throw new Exception("Slot not found: " + slotMap.Key);
-						foreach (KeyValuePair<string, Object> attachmentMap in (Dictionary<string, Object>)slotMap.Value)
+						foreach (KeyValuePair<string, Object> timelineMap in (Dictionary<string, Object>)slotMap.Value)
 						{
-							Attachment attachment = skin.GetAttachment(slot.index, attachmentMap.Key);
-							if (attachment == null) throw new Exception("Timeline attachment not found: " + attachmentMap.Key);
+							Attachment attachment = skin.GetAttachment(slot.index, timelineMap.Key);
+							if (attachment == null) throw new Exception("Timeline attachment not found: " + timelineMap.Key);
 
-							List<object> values = (List<Object>)attachmentMap.Value;
+							List<object> values = (List<Object>)timelineMap.Value;
 							List<object>.Enumerator keyMapEnumerator = values.GetEnumerator();
 
 							if (!keyMapEnumerator.MoveNext()) continue;
 							Dictionary<string, object> keyMap = (Dictionary<string, Object>)keyMapEnumerator.Current;
 
 							int frames = values.Count;
-							string timelineName = attachmentMap.Key;
+							//string timelineName = attachmentMap.Key;
 							//if (timelineName == "deform")
 							{
 								VertexAttachment vertexAttachment = (VertexAttachment)attachment;
@@ -1307,7 +1329,6 @@ namespace Spine {
 					}
 				}
 			}
-
 
 			// Draw order timeline.
 			if (map.ContainsKey("drawOrder")) {
@@ -1884,7 +1905,7 @@ namespace Spine {
 			}
 		}
 
-		static Timeline ReadTimeline (ref List<object>.Enumerator keyMapEnumerator, CurveTimeline1 timeline, float defaultValue, float scale) {
+		static Timeline ReadTimeline (ref List<object>.Enumerator keyMapEnumerator, CurveTimeline1 timeline, float defaultValue, float scale, bool limitRotation = false) {
 			Dictionary<string, object> keyMap = (Dictionary<string, Object>)keyMapEnumerator.Current;
 
 			bool isRotate = timeline is RotateTimeline;
@@ -1912,6 +1933,43 @@ namespace Spine {
 				if (useAngle)
 				{
 					value2 = GetFloat(nextMap, "angle", defaultValue) * scale;
+				}
+
+				if (limitRotation)
+				{
+					// Find Nearest Angle
+					float diff = Math.Abs(value2 - value);
+
+					float diff2 = Math.Abs((value2 - 360) - value);
+
+					float diff3 = Math.Abs((value2 + 360) - value);
+
+					float[] diffList = new float[3] { diff, diff2, diff3 };
+
+					int minIndex = 0;
+					float minValue = diffList[0];
+
+					for (int i = 1; i < diffList.Length; i++)
+					{
+						if (diffList[i] < minValue)
+						{
+							minIndex = i;
+							minValue = diffList[i];
+						}
+					}
+
+					switch (minIndex)
+					{
+						case 0:
+							break;
+						case 1:
+							value2 -= 360;
+							break;
+						case 2:
+							value2 += 360;
+							break;
+					}
+					//value2 = diff > diff2 ? (value2 - 360) : value2;
 				}
 
 				if (keyMap.ContainsKey("curve")) {
