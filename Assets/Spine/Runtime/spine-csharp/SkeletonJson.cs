@@ -1930,7 +1930,7 @@ namespace Spine {
 				float time2 = GetFloat(nextMap, "time", 0);
 				float value2 = GetFloat(nextMap, "value", defaultValue) * scale;
 
-				useAngle = isRotate && keyMap.ContainsKey("angle");
+				useAngle = isRotate && nextMap.ContainsKey("angle");
 
 				if (useAngle)
 				{
