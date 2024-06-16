@@ -1930,6 +1930,8 @@ namespace Spine {
 				float time2 = GetFloat(nextMap, "time", 0);
 				float value2 = GetFloat(nextMap, "value", defaultValue) * scale;
 
+				useAngle = isRotate && keyMap.ContainsKey("angle");
+
 				if (useAngle)
 				{
 					value2 = GetFloat(nextMap, "angle", defaultValue) * scale;
@@ -2018,14 +2020,14 @@ namespace Spine {
 			string curveString = curve as string;
 			if (curveString != null) {
 				if (curveString == "stepped") timeline.SetStepped(frame);
-				return bezier;
+				return bezier + 1;
 			}
 			List<object> curveValues = (List<object>)curve;
 			int i = value << 2;
 			float cx1 = (float)curveValues[i];
-			float cy1 = (float)curveValues[i + 1] * scale;
+			float cy1 = (float)curveValues[i + 1];
 			float cx2 = (float)curveValues[i + 2];
-			float cy2 = (float)curveValues[i + 3] * scale;
+			float cy2 = (float)curveValues[i + 3];
 			SetBezier(timeline, frame, value, bezier, time1, value1, cx1, cy1, cx2, cy2, time2, value2);
 			return bezier + 1;
 		}
@@ -2062,8 +2064,8 @@ namespace Spine {
 					float currentTime1 = curveParameter[i];
 					float currentTime2 = curveParameter[i + 1];
 					
-					float currentValue1 = curveParameter[i + 2] * (1 / scale);
-					float currentValue2 = curveParameter[i + 3] * (1 / scale);
+					float currentValue1 = curveParameter[i + 2];
+					float currentValue2 = curveParameter[i + 3];
 
 					resultList.Add(currentTime1 + (currentTime2 - currentTime1) * paramList[0]);
 					resultList.Add(currentValue1 + (currentValue2 - currentValue1) * paramList[1]);
