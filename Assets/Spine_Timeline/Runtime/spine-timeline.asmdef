@@ -1,0 +1,17 @@
+{
+    "name": "spine-timeline",
+    "references": [
+        "spine-unity",
+        "spine-csharp",
+        "Unity.Timeline"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
