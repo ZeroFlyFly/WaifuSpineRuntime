@@ -138,9 +138,36 @@ public class VendorsDecoder : EditorWindow
         }
     }
 
+    public static string FormatJson(string json)
+    {
+        //单引号替换成双引号
+        json = json.Replace("'", "\"");
+  
+        /* 正则表达式说明
+        ([{]|[,]) 包含 { 或 , 字符 $1
+        ([\s]*) 包含0或多个空字符 $2
+        ([\w]+?) 包含a-zA-Z0-9_等字符的属性，配置多次 $3
+        ([\s]*) $4
+        ([:]) 后面包含 : 字符 $5
+        */
+        Regex regex = new Regex(@"([{]|[,])([\s]*)([\w]+?)([\s]*)([:])", RegexOptions.Multiline);
+
+        //替换符合该正则表达式的内容 保留1、3、5项，并在中间加上双引号
+        json = regex.Replace(json, "$1\"$3\"$5");
+
+        Regex regex2 = new Regex(@"([^(0-9)])([.])([(0-9)]+)", RegexOptions.Multiline);
+
+        json = regex2.Replace(json, "${1}0${2}${3}");
+
+        json = json.Replace("!0", "true");
+
+        json = json.Replace("!1", "false");
+
+        return json;
+    }
+
     static void DecodeVendors(string inputUrlLink)
     {
-
         #region Decode URL Find Vendor And Index
         //替换成活动链接,注意是Vendors所在的路径，不是网页路径
         //string urlParent = "https://act.mihoyo.com/act/ys/event/e20230928review/";
@@ -307,8 +334,6 @@ public class VendorsDecoder : EditorWindow
                                 int detectJSStartIndex = GetStringIndexBackward(webHtmlContent, perIndexMatch.Index, new char[] { '\"' });
 
                                 string indexJSSubUrl = FindPairComment(detectJSStartIndex, webHtmlContent, false);
-
-                                UnityEngine.Debug.Log(indexJSSubUrl);
 
                                 if (indexJSSubUrl.EndsWith(".js"))
                                 {
@@ -599,6 +624,7 @@ public class VendorsDecoder : EditorWindow
 
         #endregion
 
+        //// -------------------------  START MANIFEST STYLE WEBSITE  -------------------------------
         #region Decode ALL Parameter
 
         List<string> ALL_PARAMETER = new List<string>();
@@ -1217,9 +1243,225 @@ public class VendorsDecoder : EditorWindow
                 NAME_TO_MANIFESTLIST[s][0].jsonString = json;
             }
         }
-
         #endregion
 
+        //// -------------------------  END MANIFEST STYLE WEBSITE  -------------------------------
+
+        //// -------------------------  START OBJECT ASSIGN WEBSITE  -------------------------------
+
+        #region Ddtect Object Assign WebSite
+
+        if(MANIFEST_ID_TO_NAME.Count == 0)
+        {
+            // Oh no manifest decode failed
+
+            // First, Analysis Resource Path
+            Dictionary<string, string> IMG_NAME_TO_URL = new Dictionary<string, string>();
+
+            string imageURLPattern = thirdFuncName + ".p\\+";
+
+            foreach (Match imageURL in Regex.Matches(vendorsText, imageURLPattern))
+            {
+                int imageURLStartIndex = imageURL.Index + thirdFuncName.Length + 3;
+
+                string imageURIContent = FindPairComment(imageURLStartIndex, vendorsText, false);
+
+                if (!string.IsNullOrEmpty(imageURIContent))
+                {
+                    string[] slashSplit = imageURIContent.Split('/');
+
+                    if(slashSplit.Length > 1)
+                    {
+                        string imageName = slashSplit[1].Split('.')[0];
+
+                        IMG_NAME_TO_URL.Add(imageName, imageURIContent);
+                    }
+                }
+            }
+
+            // END Analysis Resource Path
+
+            // Second, Analysis SRC Path
+            string srcObjectValue = "src\\:Object.values\\(Object.assign\\(";
+
+            int srcIndex = 0;
+
+            foreach (Match srcMatch in Regex.Matches(vendorsText, srcObjectValue))
+            {
+                int bracketBefore = srcMatch.Index - 1;
+
+                string srcContent = FindPairBracket(bracketBefore, vendorsText, true);
+
+                int startOffsetIndex = srcMatch.Index + 31;
+
+                int srcURIIndex = startOffsetIndex + 2;
+
+                string srcURIContent = FindPairComment(srcURIIndex, vendorsText, false);
+
+                //UnityEngine.Debug.Log(srcURIContent);
+
+                int idStartIndex = srcContent.IndexOf("id:") + 3;
+
+                string idContent = FindPairComment(bracketBefore + idStartIndex, vendorsText, false);
+                
+                int srcURIEndIndex = srcURIIndex + srcURIContent.Length + 1;//GetStringIndexForward(vendorsText, srcURIIndex + srcURIContent.Length + 3, new char[] { '"' });
+
+                int srcURITypeDetectIndex = srcURIEndIndex + 2;
+
+                // Detect Type is Base 64
+                if(vendorsText[srcURITypeDetectIndex] == '"')
+                {
+                    string base64ContentBetween = FindPairComment(srcURITypeDetectIndex, vendorsText, false);
+
+                    string trimPattern = "data:image/png;base64,";
+
+                    int trimIndex = base64ContentBetween.IndexOf(trimPattern);
+
+                    if (trimIndex >= 0)
+                    {
+                        trimIndex += trimPattern.Length;
+
+                        base64ContentBetween = base64ContentBetween.Substring(trimIndex);
+                    }
+
+                    NetSpineData data = new NetSpineData();
+
+                    data.imageType = ParameterType.Base64;
+
+                    data.imgUrl = base64ContentBetween;
+
+                    data.manifestID = srcIndex;
+
+                    data.manifestName = idContent;
+
+                    MANIFEST_ID_TO_NAME.Add(data.manifestID, data);
+
+                    if (!NAME_TO_MANIFESTLIST.ContainsKey(data.manifestName))
+                    {
+                        NAME_TO_MANIFESTLIST.Add(data.manifestName, new List<NetSpineData> { data });
+                    }
+                    else
+                    {
+                        NAME_TO_MANIFESTLIST[data.manifestName].Add(data);
+                    }
+                    
+                    srcIndex++;
+                }
+                else
+                {
+                    NetSpineData data = new NetSpineData();
+
+                    data.imageType = ParameterType.URL;
+
+                    if (IMG_NAME_TO_URL.ContainsKey(idContent))
+                    {
+                        data.imgUrl = IMG_NAME_TO_URL[idContent];
+                    }
+
+                    data.manifestID = srcIndex;
+
+                    data.manifestName = idContent;
+
+                    MANIFEST_ID_TO_NAME.Add(data.manifestID, data);
+
+                    if (!NAME_TO_MANIFESTLIST.ContainsKey(data.manifestName))
+                    {
+                        NAME_TO_MANIFESTLIST.Add(data.manifestName, new List<NetSpineData> { data });
+                    }
+                    else
+                    {
+                        NAME_TO_MANIFESTLIST[data.manifestName].Add(data);
+                    }
+
+                    srcIndex++;
+                }
+            }
+            // End Analysis SRC Path
+
+            // Third, Analysis ATLAS AND JSON Path
+
+            string atlasPattern = "atlas:Object.values\\(Object.assign\\(";
+
+            foreach (Match atlasMatch in Regex.Matches(vendorsText, atlasPattern))
+            {
+                int bracketStart = atlasMatch.Index - 1;
+
+                string atlasAndJSONContent = FindPairBracket(bracketStart, vendorsText, true);
+
+                int idStart = bracketStart - 2;
+
+                string idContent = GetStringBackward(vendorsText, idStart, new char[] { ',', '{' });
+
+                string atlasStartPattern = "atlas:Object.values(Object.assign({";
+
+                int atlasStartIndex = atlasAndJSONContent.IndexOf(atlasStartPattern);
+
+                string atlasURIPath = FindPairComment(atlasStartIndex + atlasStartPattern.Length, atlasAndJSONContent, true);
+
+                string atlas = FindPairComment(atlasStartIndex + atlasStartPattern.Length + atlasURIPath.Length + 1, atlasAndJSONContent, false);
+
+                atlas = atlas.Replace("\\n", "\n");
+
+                atlas = atlas.Replace("\\t", "");
+
+                if (NAME_TO_MANIFESTLIST.ContainsKey(idContent))
+                {
+                    foreach (var data in NAME_TO_MANIFESTLIST[idContent])
+                    {
+                        data.atlasString = atlas;
+
+                        break;
+                    }
+                }
+                else
+                {
+                    NetSpineData data = new NetSpineData();
+
+                    data.atlasString = atlas;
+
+                    NAME_TO_MANIFESTLIST.Add(idContent, new List<NetSpineData>() { data });
+
+                    UnityEngine.Debug.Log("MISSING : Atlas " + idContent + "  has no relate resources.");
+                }
+
+                string jsonStartPattern = "json:Object.values(Object.assign({";
+
+                int jsonStartIndex = atlasAndJSONContent.IndexOf(jsonStartPattern);
+
+                string jsonURIPath = FindPairComment(jsonStartIndex + jsonStartPattern.Length, atlasAndJSONContent, true);
+
+                string json = FindPairBracket(jsonStartIndex + jsonStartPattern.Length + jsonURIPath.Length + 1, atlasAndJSONContent, true);
+
+                json = FormatJson(json);
+
+                json = json.Replace("4.0-from-", "");
+
+                json = json.Replace("4.1-from-", "");
+
+                if (NAME_TO_MANIFESTLIST.ContainsKey(idContent))
+                {
+                    foreach (var data in NAME_TO_MANIFESTLIST[idContent])
+                    {
+                        data.jsonString = json;
+
+                        break;
+                    }
+                }
+                else
+                {
+                    NetSpineData data = new NetSpineData();
+
+                    data.jsonString = json;
+
+                    NAME_TO_MANIFESTLIST.Add(idContent, new List<NetSpineData>() { data });
+
+                    UnityEngine.Debug.Log("MISSING : JSON " + idContent + "  has no relate resources.");
+                }
+            }
+            // End Analysis ATLAS AND JSON Path
+        }
+        #endregion
+        //// -------------------------  END OBJECT ASSIGN WEBSITE  -------------------------------
         watch.Stop();
 
         UnityEngine.Debug.Log("Decode Duration is " + (watch.Elapsed));
@@ -1631,6 +1873,8 @@ public class VendorsDecoder : EditorWindow
 
         int otherJsonIndex = 0;
 
+        bool findGeometry = false;
+
         foreach (Match geoMatch in Regex.Matches(vendorsText, geometryPattern))
         {
             int startIndex = geoMatch.Index + 21;
@@ -1645,6 +1889,7 @@ public class VendorsDecoder : EditorWindow
 
                 if (!File.Exists(geoSavePath))
                 {
+                    findGeometry = true;
                     File.WriteAllText(geoSavePath, jsonContent);
                 }
 
@@ -1664,6 +1909,47 @@ public class VendorsDecoder : EditorWindow
                 }
 
                 otherJsonIndex++;
+            }
+        }
+
+        if (!findGeometry)
+        {
+            string anotherGeoPattern = "geometries:\\{";
+
+            foreach (Match geoMatch in Regex.Matches(vendorsText, anotherGeoPattern))
+            {
+                int jsonStartIndex = geoMatch.Index + 11;
+
+                string jsonContent = FindPairBracket(jsonStartIndex, vendorsText, false);
+
+                if (!string.IsNullOrEmpty(jsonContent))
+                {
+                    int fullJsonStartIndex = geoMatch.Index - 1;
+
+                    string fullJson = FindPairBracket(fullJsonStartIndex, vendorsText, true);
+
+                    string suffix = geoIndex == 0 ? "" : ("" + geoIndex);
+
+                    string geoSavePath = geometrySaveFolder + folderSubPath + "_" + suffix + "Geo.json";
+
+                    if (!File.Exists(geoSavePath))
+                    {
+                        findGeometry = true;
+
+                        StringBuilder jsonContentBuilder = new StringBuilder();
+
+                        jsonContentBuilder.Append(fullJson);
+
+                        string json = jsonContentBuilder.ToString();
+
+                        json = FormatJson(json);
+
+                        File.WriteAllText(geoSavePath, json);
+                    }
+
+                    geoIndex++;
+                }
+                
             }
         }
         #endregion
