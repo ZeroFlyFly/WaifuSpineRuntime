@@ -1238,9 +1238,12 @@ public class VendorsDecoder : EditorWindow
 
                 json = json.Replace("4.1-from-", "");
 
-                string s = atlasOrder[i];
+                if (i < atlasOrder.Count)
+                {
+                    string s = atlasOrder[i];
 
-                NAME_TO_MANIFESTLIST[s][0].jsonString = json;
+                    NAME_TO_MANIFESTLIST[s][0].jsonString = json;
+                }
             }
         }
         #endregion
