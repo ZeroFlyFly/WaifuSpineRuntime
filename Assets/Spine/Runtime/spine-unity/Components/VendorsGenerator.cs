@@ -818,7 +818,19 @@ namespace Spine.Unity
 
                             if(generateMesh != null)
                             {
-                                generateMesh.material = relateMaterial;
+                                //generateMesh.material = relateMaterial;
+
+                                Texture t = relateMaterial.GetTexture("_MainTex");
+
+                                if (t != null)
+                                {
+                                    generateMesh.material = relateMaterial;
+                                }
+                                else
+                                {
+                                    generateMesh.material = relateMaterial;
+                                    generateMesh.enabled = false;
+                                }
                             }
                         }
                     }
