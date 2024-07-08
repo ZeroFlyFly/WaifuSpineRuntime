@@ -33,7 +33,11 @@ public class VendorsDecoder : EditorWindow
         public ParameterType imageType = ParameterType.NoImage;
     }
 
-    string inputUrl = "";
+    string webIndexUrl = "";
+
+    string indexJSUrl = "";
+
+    string vendorJSUrl = "";
 
     [MenuItem("ZeroFly/Read Vendors Content")]
     static void OpenDecoderWindow()
@@ -44,30 +48,29 @@ public class VendorsDecoder : EditorWindow
     private void OnGUI()
     {
         GUILayout.Label("Vendors Decoder Window", EditorStyles.boldLabel);
-
         //EditorGUI.BeginChangeCheck();
-        inputUrl = EditorGUILayout.TextField("Web Url: ", inputUrl, EditorStyles.textField);
+        webIndexUrl = EditorGUILayout.TextField("Web Url: ", webIndexUrl, EditorStyles.textField);
 
-        inputUrl = inputUrl.Trim();
+        webIndexUrl = webIndexUrl.Trim();
 
         bool isValid = true;
 
         //if (EditorGUI.EndChangeCheck())
         {
             // the value has changed
-            if (string.IsNullOrEmpty(inputUrl))
+            if (string.IsNullOrEmpty(webIndexUrl))
             {
                 GUILayout.Label("Please Input Event Index Url", EditorStyles.boldLabel);
 
                 isValid = false;
             }
-            else if (!inputUrl.Contains("https://"))
+            else if (!webIndexUrl.Contains("https://"))
             {
                 GUILayout.Label("Error! No Https Header Found", EditorStyles.boldLabel);
 
                 isValid = false;
             }
-            else if (!inputUrl.ToLower().Contains("mihoyo") && !inputUrl.ToLower().Contains("hoyoverse"))
+            else if (!webIndexUrl.ToLower().Contains("mihoyo") && !webIndexUrl.ToLower().Contains("hoyoverse"))
             {
                 GUILayout.Label("Error! Does not looks like a mihoyo link", EditorStyles.boldLabel);
 
@@ -79,7 +82,7 @@ public class VendorsDecoder : EditorWindow
         {
             if (isValid)
             {
-                DecodeVendors(inputUrl);
+                DecodeVendors(webIndexUrl, indexJSUrl, vendorJSUrl);
             }
             else
             {
@@ -90,23 +93,25 @@ public class VendorsDecoder : EditorWindow
 
         if (isValid)
         {
-            int zoneUrlStartIndex = inputUrl.IndexOf("//");
+            int zoneUrlStartIndex = webIndexUrl.IndexOf("//");
 
             zoneUrlStartIndex += 2;
 
-            int zoneUrlEndIndex = inputUrl.IndexOf("/", zoneUrlStartIndex);
+            int zoneUrlEndIndex = webIndexUrl.IndexOf("/", zoneUrlStartIndex);
 
-            string zoneUrl = inputUrl;
+            string zoneUrl = webIndexUrl;
 
             if (zoneUrlEndIndex > 0)
             {
-                zoneUrl = inputUrl.Substring(0, zoneUrlEndIndex);
+                zoneUrl = webIndexUrl.Substring(0, zoneUrlEndIndex);
 
-                string[] eventLinkSplit = inputUrl.Split('?');
+                string[] eventLinkSplit = webIndexUrl.Split('?');
 
                 string eventUrlLink = eventLinkSplit[0];
 
                 string[] eventPathList = eventUrlLink.Split('/');
+
+                GUILayout.Label("\n========================================");
 
                 GUILayout.Label("目前检测到的信息 :", EditorStyles.boldLabel);
 
@@ -132,8 +137,20 @@ public class VendorsDecoder : EditorWindow
                 GUILayout.Label("请检查上述信息是否正确~", EditorStyles.boldLabel);
             }
         }
-        else
+
+        GUILayout.Label("\n================ 可选功能 Optional ====================");
+
+        indexJSUrl = EditorGUILayout.TextField("Index Url (* 默认留空): ", indexJSUrl, EditorStyles.textField);
+
+        indexJSUrl = indexJSUrl.Trim();
+
+        vendorJSUrl = EditorGUILayout.TextField("Vendor Url (* 默认留空): ", vendorJSUrl, EditorStyles.textField);
+
+        vendorJSUrl = vendorJSUrl.Trim();
+
+        //else
         {
+            GUILayout.Label("\n========================================");
             GUILayout.Label("Example : " + "https://act.mihoyo.com/ys/event/e20231209preview-yh731z/index.html", EditorStyles.boldLabel);
         }
     }
@@ -166,7 +183,7 @@ public class VendorsDecoder : EditorWindow
         return json;
     }
 
-    static void DecodeVendors(string inputUrlLink)
+    static void DecodeVendors(string inputwebUrlLink, string inputIndexJSLink, string inputVendorJSLink)
     {
         #region Decode URL Find Vendor And Index
         //替换成活动链接,注意是Vendors所在的路径，不是网页路径
@@ -177,7 +194,7 @@ public class VendorsDecoder : EditorWindow
 
         var watch = Stopwatch.StartNew();
 
-        string[] eventLinkSplit = inputUrlLink.Split('?');
+        string[] eventLinkSplit = inputwebUrlLink.Split('?');
 
         string eventUrlLink = eventLinkSplit[0];
 
@@ -209,6 +226,12 @@ public class VendorsDecoder : EditorWindow
                     break;
                 }
             }
+        }
+
+        // Failed to Parse Event Name, Use Last second pos instead
+        if (string.IsNullOrEmpty(folderSubPath) && (eventPathList.Length - 2) != 2)
+        {
+            folderSubPath = eventPathList[eventPathList.Length - 2];
         }
 
         string urlParent = "";
@@ -253,15 +276,51 @@ public class VendorsDecoder : EditorWindow
             }
         }
 
+        if(!string.IsNullOrEmpty(inputIndexJSLink))
+        {
+            indexUrl = inputIndexJSLink;
+
+            int indexBackSlashPos = indexUrl.LastIndexOf('/');
+
+            indexFileName = indexUrl.Substring(indexBackSlashPos + 1);
+        }
+
+        if (!string.IsNullOrEmpty(inputVendorJSLink))
+        {
+            vendorsUrl = inputVendorJSLink;
+
+            int backSlashPos = vendorsUrl.LastIndexOf('/');
+
+            urlParent = vendorsUrl.Substring(0, backSlashPos + 1);
+
+            vendorsFileName = vendorsUrl.Substring(backSlashPos + 1);
+
+            string configPath = Application.dataPath + "/" + folderSubPath + "/";
+
+            string configName = configPath + folderSubPath + "_Config.txt";
+
+            if (!string.IsNullOrEmpty(urlParent) && !string.IsNullOrEmpty(vendorsFileName))
+            {
+                if (!Directory.Exists(configPath))
+                {
+                    Directory.CreateDirectory(configPath);
+                }
+
+                string writeContent = urlParent + "\n" + vendorsFileName + "\n" + vendorsUrl + "\n" + indexFileName + "\n" + indexUrl + "\n" + eventUrlLink;
+
+                File.WriteAllText(configName, writeContent);
+            }
+        }
+
         if (string.IsNullOrEmpty(vendorsUrl))
         {
-            int zoneUrlStartIndex = inputUrlLink.IndexOf("//");
+            int zoneUrlStartIndex = inputwebUrlLink.IndexOf("//");
 
             zoneUrlStartIndex += 2;
 
-            int zoneUrlEndIndex = inputUrlLink.IndexOf("/", zoneUrlStartIndex);
+            int zoneUrlEndIndex = inputwebUrlLink.IndexOf("/", zoneUrlStartIndex);
 
-            string zoneUrl = zoneUrlEndIndex > 0 ? inputUrlLink.Substring(0, zoneUrlEndIndex) : inputUrlLink;
+            string zoneUrl = zoneUrlEndIndex > 0 ? inputwebUrlLink.Substring(0, zoneUrlEndIndex) : inputwebUrlLink;
 
             int lastEventUrlSlashPos = eventUrlLink.LastIndexOf("/");
 
@@ -269,7 +328,7 @@ public class VendorsDecoder : EditorWindow
 
             string[] indexRootUrlList = indexRootUrl.Split('/');
 
-            string vendorsJSPattern = "vendors";
+            string vendorsJSPattern = "vendor";
 
             using (WebClient client = new WebClient())
             {
