@@ -60,7 +60,7 @@ public class VendorsDecoder : EditorWindow
             // the value has changed
             if (string.IsNullOrEmpty(webIndexUrl))
             {
-                GUILayout.Label("Please Input Event Index Url", EditorStyles.boldLabel);
+                GUILayout.Label("Please Input Event Index Website Url", EditorStyles.boldLabel);
 
                 isValid = false;
             }
@@ -138,13 +138,13 @@ public class VendorsDecoder : EditorWindow
             }
         }
 
-        GUILayout.Label("\n================ 可选功能 Optional ====================");
+        GUILayout.Label("\n=========== 可选功能  Optional ===============");
 
-        indexJSUrl = EditorGUILayout.TextField("Index Url (* 默认留空): ", indexJSUrl, EditorStyles.textField);
+        indexJSUrl = EditorGUILayout.TextField("Index JS Url (* 默认留空): ", indexJSUrl, EditorStyles.textField);
 
         indexJSUrl = indexJSUrl.Trim();
 
-        vendorJSUrl = EditorGUILayout.TextField("Vendor Url (* 默认留空): ", vendorJSUrl, EditorStyles.textField);
+        vendorJSUrl = EditorGUILayout.TextField("Vendor JS Url (* 默认留空): ", vendorJSUrl, EditorStyles.textField);
 
         vendorJSUrl = vendorJSUrl.Trim();
 
