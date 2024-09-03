@@ -1375,7 +1375,7 @@ public class VendorsDecoder : EditorWindow
                 {
                     string base64ContentBetween = FindPairComment(srcURITypeDetectIndex, vendorsText, false);
 
-                    string trimPattern = "data:image/png;base64,";
+                    string trimPattern = ";base64,";
 
                     int trimIndex = base64ContentBetween.IndexOf(trimPattern);
 
