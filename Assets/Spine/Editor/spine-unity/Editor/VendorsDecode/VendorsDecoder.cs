@@ -1042,6 +1042,7 @@ public class VendorsDecoder : EditorWindow
             {
                 followManifestID += 1;
             }
+
             DecideBase64Case(ALL_PARAMETER, MANIFEST_ID_TO_NAME, i, followManifestID, vendorsText, INDEX_ID_TO_RESOURCE, VENDOR_ID_TO_RESOURCE);
 
             followManifestID += 1;
@@ -2386,6 +2387,10 @@ public class VendorsDecoder : EditorWindow
         {
             if (MANIFEST_DICT[MANIFEST_ID].imageType == ParameterType.Base64 || MANIFEST_DICT[MANIFEST_ID].imageType == ParameterType.URL)
                 return false;
+        }
+        else
+        {
+            return false;
         }
 
         string sPrefix = PARAMETER_ARRAY[PARAMETER_ID];
