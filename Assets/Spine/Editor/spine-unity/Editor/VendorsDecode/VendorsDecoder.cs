@@ -453,7 +453,15 @@ public class VendorsDecoder : EditorWindow
             {
                 client.Proxy = null;
 
-                client.DownloadFile(new Uri(vendorsUrl), vendorsFileLocalPath);
+                try
+                {
+                    client.DownloadFile(new Uri(vendorsUrl), vendorsFileLocalPath);
+                }
+                catch(Exception e)
+                {
+                    UnityEngine.Debug.Log(e.StackTrace);
+                }
+                
             }
         }
 
@@ -465,7 +473,15 @@ public class VendorsDecoder : EditorWindow
                 {
                     client.Proxy = null;
 
-                    client.DownloadFile(new Uri(indexUrl), indexFileLocalPath);
+                    try
+                    {
+                        client.DownloadFile(new Uri(indexUrl), indexFileLocalPath);
+                    }
+                    catch(Exception e)
+                    {
+                        UnityEngine.Debug.Log(e.StackTrace);
+                    }
+                    
                 }
             }
             catch(Exception e)
@@ -1337,7 +1353,8 @@ public class VendorsDecoder : EditorWindow
                     {
                         string imageName = slashSplit[1].Split('.')[0];
 
-                        IMG_NAME_TO_URL.Add(imageName, imageURIContent);
+                        if(!IMG_NAME_TO_URL.ContainsKey(imageName))
+                            IMG_NAME_TO_URL.Add(imageName, imageURIContent);
                     }
                 }
             }
@@ -1585,18 +1602,24 @@ public class VendorsDecoder : EditorWindow
                             using (WebClient client = new WebClient())
                             {
                                 client.Proxy = null;
+                                try
+                                {
+                                    client.DownloadFile(new Uri(url), jsonSaveFile);
 
-                                client.DownloadFile(new Uri(url), jsonSaveFile);
+                                    string jsonText = File.ReadAllText(jsonSaveFile, Encoding.UTF8);
 
-                                string jsonText = File.ReadAllText(jsonSaveFile, Encoding.UTF8);
+                                    jsonText = jsonText.Replace("4.0-from-", "");
 
-                                jsonText = jsonText.Replace("4.0-from-", "");
+                                    jsonText = jsonText.Replace("4.1-from-", "");
 
-                                jsonText = jsonText.Replace("4.1-from-", "");
+                                    File.WriteAllText(jsonSaveFile, jsonText);
 
-                                File.WriteAllText(jsonSaveFile, jsonText);
-
-                                //Thread.Sleep(UnityEngine.Random.Range(8, 15));
+                                    //Thread.Sleep(UnityEngine.Random.Range(8, 15));
+                                }
+                                catch (Exception e)
+                                {
+                                    UnityEngine.Debug.Log(e.StackTrace);
+                                }
                             }
                         }
                     }
@@ -1883,9 +1906,14 @@ public class VendorsDecoder : EditorWindow
                                 {
                                     client.Proxy = null;
 
-                                    client.DownloadFile(new Uri(url), FailedPath + name + ".png");
-
-                                    //Thread.Sleep(UnityEngine.Random.Range(8, 15));
+                                    try
+                                    {
+                                        client.DownloadFile(new Uri(url), FailedPath + name + ".png");
+                                    }
+                                    catch(Exception e)
+                                    {
+                                        UnityEngine.Debug.Log(e.StackTrace);
+                                    }
                                 }
                             }
                         }
@@ -2088,9 +2116,16 @@ public class VendorsDecoder : EditorWindow
                             {
                                 client.Proxy = null;
 
-                                client.DownloadFile(new Uri(url), storagePath);
+                                try
+                                {
+                                    client.DownloadFile(new Uri(url), storagePath);
 
-                                //Thread.Sleep(UnityEngine.Random.Range(8, 15));
+                                    //Thread.Sleep(UnityEngine.Random.Range(8, 15));
+                                }
+                                catch (Exception e)
+                                {
+                                    UnityEngine.Debug.Log(e.StackTrace);
+                                }
                             }
                         }
                     }
@@ -2154,10 +2189,16 @@ public class VendorsDecoder : EditorWindow
                             using (WebClient client = new WebClient())
                             {
                                 client.Proxy = null;
+                                try
+                                {
+                                    client.DownloadFile(new Uri(url), storagePath);
 
-                                client.DownloadFile(new Uri(url), storagePath);
-
-                                //Thread.Sleep(UnityEngine.Random.Range(8, 15));
+                                    //Thread.Sleep(UnityEngine.Random.Range(8, 15));
+                                }
+                                catch (Exception e)
+                                {
+                                    UnityEngine.Debug.Log(e.StackTrace);
+                                }
                             }
                         }
                     }
