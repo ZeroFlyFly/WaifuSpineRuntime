@@ -1471,8 +1471,14 @@ namespace Spine {
 
 			if (relateAnimInfo.ContainsKey("animation"))
 			{
-				foreach (KeyValuePair<string, Object> animationParam in (Dictionary<string, Object>)relateAnimInfo["animation"])
+				Dictionary<string, Object> toSearch = (Dictionary<string, Object>)relateAnimInfo["animation"];
+
+				foreach (KeyValuePair<string, Object> animationParam in toSearch)
 				{
+					if(toSearch.ContainsKey("animation") && !animationParam.Key.Equals("animation"))
+                    {
+						continue;
+                    }
 					float animationDetailMode = 0;
 
 					float animationDetailRotateCenter = 0;
@@ -1598,7 +1604,7 @@ namespace Spine {
 					if (animationDetail.ContainsKey("mode"))
 					{
 						animationDetailMode = (float)animationDetail["mode"];
-						//UnityEngine.Debug.Log(rootBoneNameEntry + " " + animationDetailMode + "  ");
+						//UnityEngine.Debug.Log(rootBoneNameEntry + " : " + animationDetail["mode"] + "  ");
 					}
 
 					if (animationDetail.ContainsKey("rotateCenter"))
