@@ -2130,6 +2130,51 @@ public class VendorsDecoder : EditorWindow
                         }
                     }
                 }
+                else if (pair.Value.EndsWith(".atlas"))
+                {
+                    string[] resNameList = pair.Value.Split('/');
+
+                    string resName = resNameList[resNameList.Length - 1];
+
+                    string[] resDotName = resName.Split('.');
+
+                    resBetterName = resDotName[0] + "." + resDotName[resDotName.Length - 1];
+
+                    resBetterName += ".txt";
+
+                    if (!Directory.Exists(resPath))
+                    {
+                        Directory.CreateDirectory(resPath);
+                    }
+
+                    string storagePath = resPath + resBetterName;
+
+                    if (!File.Exists(storagePath))
+                    {
+                        if (DownloadMode)
+                        {
+                            string url = urlParent + pair.Value;
+
+                            //UnityEngine.Debug.Log(url);
+
+                            using (WebClient client = new WebClient())
+                            {
+                                client.Proxy = null;
+
+                                try
+                                {
+                                    client.DownloadFile(new Uri(url), storagePath);
+
+                                    //Thread.Sleep(UnityEngine.Random.Range(8, 15));
+                                }
+                                catch (Exception e)
+                                {
+                                    UnityEngine.Debug.Log(e.StackTrace);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -2189,6 +2234,51 @@ public class VendorsDecoder : EditorWindow
                             using (WebClient client = new WebClient())
                             {
                                 client.Proxy = null;
+                                try
+                                {
+                                    client.DownloadFile(new Uri(url), storagePath);
+
+                                    //Thread.Sleep(UnityEngine.Random.Range(8, 15));
+                                }
+                                catch (Exception e)
+                                {
+                                    UnityEngine.Debug.Log(e.StackTrace);
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (pair.Value.EndsWith(".atlas"))
+                {
+                    string[] resNameList = pair.Value.Split('/');
+
+                    string resName = resNameList[resNameList.Length - 1];
+
+                    string[] resDotName = resName.Split('.');
+
+                    resBetterName = resDotName[0] + "." + resDotName[resDotName.Length - 1];
+
+                    resBetterName += ".txt";
+
+                    if (!Directory.Exists(resPath))
+                    {
+                        Directory.CreateDirectory(resPath);
+                    }
+
+                    string storagePath = resPath + resBetterName;
+
+                    if (!File.Exists(storagePath))
+                    {
+                        if (DownloadMode)
+                        {
+                            string url = urlParent + pair.Value;
+
+                            //UnityEngine.Debug.Log(url);
+
+                            using (WebClient client = new WebClient())
+                            {
+                                client.Proxy = null;
+
                                 try
                                 {
                                     client.DownloadFile(new Uri(url), storagePath);
