@@ -33,6 +33,14 @@ public class VendorsDecoder : EditorWindow
         public ParameterType imageType = ParameterType.NoImage;
     }
 
+    public class SimpleSet
+    {
+        public string name;
+        public int srcID;
+        public int atlasID;
+        public int jsonID;
+    }
+
     string webIndexUrl = "";
 
     string indexJSUrl = "";
@@ -82,7 +90,12 @@ public class VendorsDecoder : EditorWindow
         {
             if (isValid)
             {
-                DecodeVendors(webIndexUrl, indexJSUrl, vendorJSUrl);
+                bool success = DecodeVendors(webIndexUrl, indexJSUrl, vendorJSUrl);
+
+                if (!success)
+                {
+                    DecodeVendors(webIndexUrl, indexJSUrl, vendorJSUrl, true);
+                }
             }
             else
             {
@@ -183,7 +196,7 @@ public class VendorsDecoder : EditorWindow
         return json;
     }
 
-    static void DecodeVendors(string inputwebUrlLink, string inputIndexJSLink, string inputVendorJSLink)
+    static bool DecodeVendors(string inputwebUrlLink, string inputIndexJSLink, string inputVendorJSLink, bool isSwapTry = false)
     {
         #region Decode URL Find Vendor And Index
         //替换成活动链接,注意是Vendors所在的路径，不是网页路径
@@ -247,6 +260,8 @@ public class VendorsDecoder : EditorWindow
         string indexFileLocalPath = "";
 
         string indexFileName = "";
+
+        bool decodeIndexJSInstead = false;
 
 
         if (!string.IsNullOrEmpty(folderSubPath))
@@ -440,7 +455,7 @@ public class VendorsDecoder : EditorWindow
         if (string.IsNullOrEmpty(vendorsFileName))
         {
             UnityEngine.Debug.LogError("No Valid Vendors Url Found! Failed!");
-            return;
+            return false;
         }
 
         vendorsFileLocalPath = Application.dataPath + "/" + folderSubPath + "/" + vendorsFileName;
@@ -494,12 +509,19 @@ public class VendorsDecoder : EditorWindow
         if (!File.Exists(vendorsFileLocalPath))
         {
             UnityEngine.Debug.LogError("No Js File Found. Please Check vendorsFileLocalPath");
-            return;
+            return false;
         }
 
         string vendorsText = File.ReadAllText(vendorsFileLocalPath, Encoding.UTF8);
 
         vendorsText = vendorsText.Trim();
+
+        if (isSwapTry)
+        {
+            string swapText = File.ReadAllText(indexFileLocalPath, Encoding.UTF8);
+
+            vendorsText = swapText.Trim();
+        }
 
         #endregion
 
@@ -510,6 +532,12 @@ public class VendorsDecoder : EditorWindow
         string secondFuncName = "";
 
         string thirdFuncName = "";
+
+        string indexFirstFuncName = "";
+
+        string indexSecondFuncName = "";
+
+        string indexThirdFuncName = "";
 
         string findFuncPattern = "function\\((.+?)\\)";
 
@@ -582,7 +610,7 @@ public class VendorsDecoder : EditorWindow
         {
             UnityEngine.Debug.LogError("Can not Decide Function Name");
 
-            return;
+            return false;
         }
 
         #endregion
@@ -645,9 +673,11 @@ public class VendorsDecoder : EditorWindow
 
         Dictionary<string, string> INDEX_ID_TO_RESOURCE = new Dictionary<string, string>();
 
+        string indexText = "";
+
         if (File.Exists(indexFileLocalPath))
         {
-            string indexText = File.ReadAllText(indexFileLocalPath, Encoding.UTF8);
+            indexText = File.ReadAllText(indexFileLocalPath, Encoding.UTF8);
 
             indexText = indexText.Trim();
 
@@ -803,14 +833,8 @@ public class VendorsDecoder : EditorWindow
         }
         else
         {
-            UnityEngine.Debug.LogError("No Parameter Found! Check Context");
-            return;
+            UnityEngine.Debug.LogWarning("No Parameter Found! It might cause problem in old website");
         }
-
-        /*for(int i = 0; i < ALL_PARAMETER.Count; i++)
-        {
-            UnityEngine.Debug.Log("ALL" + ALL_PARAMETER[i]);
-        }*/
 
         #endregion
 
@@ -822,19 +846,29 @@ public class VendorsDecoder : EditorWindow
 
         List<int> jsonManifestIDList = new List<int>();
 
-        string manifestPattern = "_MANIFEST=";
+        List<int> srcOrder = new List<int>();
 
-        MatchCollection manifestCollect = Regex.Matches(vendorsText, manifestPattern);
+        string manifestSrcIDPattern = "src:[(a-z)]+\\([0-9]+\\),id:";
 
-        //List<Match> jsonAndAtlasCollection = new List<Match>();
+        MatchCollection manifestSrcCollect = Regex.Matches(vendorsText, manifestSrcIDPattern);
 
-        foreach (Match manifestMatch in manifestCollect)
+        foreach (Match manifestMatch in manifestSrcCollect)
         {
-            int bracketStartIndex = manifestMatch.Index + 10;
+            int bracketIndex = GetStringIndexBackward(vendorsText, manifestMatch.Index, new char[] { '{' });
+
+            int bracketIndex2 = GetStringIndexBackward(vendorsText, manifestMatch.Index - 1, new char[] { '=' });
+
+            if (bracketIndex < 1 || (bracketIndex - bracketIndex2) > 3)
+            {
+                continue;
+            }
+
+            int bracketStartIndex = bracketIndex2 + 1;
 
             string contentBetween = FindPairBracket(bracketStartIndex, vendorsText, true);
 
             string contentBetweenBigBracket = "\\{(.+?)\\}";
+
             foreach (Match perLineMatch in Regex.Matches(contentBetween, contentBetweenBigBracket))
             {
                 int PAIR_ID = -1;
@@ -866,99 +900,110 @@ public class VendorsDecoder : EditorWindow
                     NAME_ID = FindPairComment(Name_Index, perLineMatchValue, false);
                 }
 
-                if (PAIR_ID >= 0)
+                if (!MANIFEST_ID_TO_NAME.ContainsKey(PAIR_ID))
                 {
-                    if (!MANIFEST_ID_TO_NAME.ContainsKey(PAIR_ID))
+                    NetSpineData avalableData = new NetSpineData();
+
+                    avalableData.manifestID = PAIR_ID;
+
+                    avalableData.manifestName = NAME_ID;
+
+                    MANIFEST_ID_TO_NAME.Add(PAIR_ID, avalableData);
+
+                    srcOrder.Add(PAIR_ID);
+
+                    if (NAME_TO_MANIFESTLIST.ContainsKey(NAME_ID))
                     {
-                        NetSpineData avalableData = new NetSpineData();
+                        List<NetSpineData> list = NAME_TO_MANIFESTLIST[NAME_ID];
 
-                        avalableData.manifestID = PAIR_ID;
+                        list.Add(avalableData);
+                    }
+                    else
+                    {
+                        List<NetSpineData> list = new List<NetSpineData>();
 
-                        avalableData.manifestName = NAME_ID;
+                        list.Add(avalableData);
 
-                        MANIFEST_ID_TO_NAME.Add(PAIR_ID, avalableData);
-
-                        if (NAME_TO_MANIFESTLIST.ContainsKey(NAME_ID))
-                        {
-                            List<NetSpineData> list = NAME_TO_MANIFESTLIST[NAME_ID];
-
-                            list.Add(avalableData);
-                        }
-                        else
-                        {
-                            List<NetSpineData> list = new List<NetSpineData>();
-
-                            list.Add(avalableData);
-
-                            NAME_TO_MANIFESTLIST.Add(NAME_ID, list);
-                        }
+                        NAME_TO_MANIFESTLIST.Add(NAME_ID, list);
                     }
                 }
-                else
+            }
+        }
+
+        string manifestAtlasAndJsonPattern = ":{atlas:[(a-z)]+\\([0-9]+\\),json:[(a-z)]+\\([0-9]+\\)";
+
+        MatchCollection manifestAtlasAndJsonCollect = Regex.Matches(vendorsText, manifestAtlasAndJsonPattern);
+
+        //List<Match> jsonAndAtlasCollection = new List<Match>();
+
+        List<SimpleSet> simpleSetList = new List<SimpleSet>();
+
+        foreach (Match manifestMatch in manifestAtlasAndJsonCollect)
+        {
+            int bracketIndex = GetStringIndexBackward(vendorsText, manifestMatch.Index - 1, new char[] { ',', '{' });
+
+            if (bracketIndex < 1 || !vendorsText[bracketIndex - 1].Equals('='))
+            {
+                continue;
+            }
+            
+            int bracketStartIndex = bracketIndex;
+
+            string contentBetween = FindPairBracket(bracketStartIndex, vendorsText, true);
+
+            string contentBetweenBigBracket = "\\{(.+?)\\}";
+
+            foreach (Match perLineMatch in Regex.Matches(contentBetween, contentBetweenBigBracket))
+            {
+                string perLineMatchValue = perLineMatch.Value;
+
+                if (perLineMatchValue.Contains("atlas") && perLineMatchValue.Contains("json"))
                 {
-                    if (perLineMatchValue.Contains("atlas") && perLineMatchValue.Contains("json"))
+                    int nameStartDetect = perLineMatch.Value.IndexOf("atlas") + perLineMatch.Index - 2;
+
+                    string atlasRelateSrcName = GetStringBackward(contentBetween, nameStartDetect, new char[] { '{',',' });
+
+                    atlasRelateSrcName = atlasRelateSrcName.Substring(0, atlasRelateSrcName.Length - 1);
+
+                    int jsonID = GetNumberByTag(perLineMatchValue, "json", thirdFuncName);
+
+                    int atlasID = GetNumberByTag(perLineMatchValue, "atlas", thirdFuncName);
+
+                    jsonManifestIDList.Add(jsonID);
+
+                    SimpleSet ss = new SimpleSet();
+
+                    ss.name = atlasRelateSrcName;
+
+                    ss.atlasID = atlasID;
+
+                    ss.jsonID = jsonID;
+
+                    if (NAME_TO_MANIFESTLIST.ContainsKey(atlasRelateSrcName))
                     {
-                        int jsonID = GetNumberByTag(perLineMatchValue, "json");
-                        jsonManifestIDList.Add(jsonID);
+                        ss.srcID = NAME_TO_MANIFESTLIST[atlasRelateSrcName][0].manifestID;
                     }
+
+                    simpleSetList.Add(ss);
                 }
             }
         }
 
         #endregion
 
-        /*foreach(var pair in MANIFEST_ID_TO_NAME)
+        if (MANIFEST_ID_TO_NAME.Count <= 0)
         {
-            UnityEngine.Debug.Log("AA " + pair.Key + " " + pair.Value);
-        }*/
+            // No SRC Found
+            return false;
+        }
 
-        #region Try Calc ALL PARAMETER OFFSET
-
-        int latestHitIndex = -1;
-
-        int latestManifestID = -1;
-
-        for (int i = 0; i < ALL_PARAMETER.Count; i++)
+        if(ALL_PARAMETER.Count * 1.0f < (MANIFEST_ID_TO_NAME.Count * 1.0f / 3.0f))
         {
-            string sPrefix = ALL_PARAMETER[i];
-
-            string contentBetween = "";// FindPairComment(bracketStartIndex, vendorsText, false);
-
-            if (string.IsNullOrEmpty(contentBetween))
+            foreach(var ss in simpleSetList)
             {
-                if (INDEX_ID_TO_RESOURCE.ContainsKey(sPrefix))
-                {
-                    string toCheck = INDEX_ID_TO_RESOURCE[sPrefix];
+                string simpleSetSrcContent = "";
 
-                    if (toCheck.EndsWith(".png") || toCheck.EndsWith(".jpg"))
-                    {
-                        contentBetween = INDEX_ID_TO_RESOURCE[sPrefix];
-
-                        if(!ALREADY_USE_INDEX_RESOURCES.ContainsKey(sPrefix))
-                            ALREADY_USE_INDEX_RESOURCES.Add(sPrefix, "1");
-                    }
-                }
-            }
-
-            if (string.IsNullOrEmpty(contentBetween))
-            {
-                if (VENDOR_ID_TO_RESOURCE.ContainsKey(sPrefix))
-                {
-                    string toCheck = VENDOR_ID_TO_RESOURCE[sPrefix];
-
-                    if (toCheck.EndsWith(".png") || toCheck.EndsWith(".jpg"))
-                    {
-                        contentBetween = VENDOR_ID_TO_RESOURCE[sPrefix];
-
-                        if (!ALREADY_USE_VENDORS_RESOURCES.ContainsKey(sPrefix))
-                            ALREADY_USE_VENDORS_RESOURCES.Add(sPrefix, "1");
-                    }
-                }
-            }
-
-            if (string.IsNullOrEmpty(contentBetween))
-            {
-                string prefix = "" + ALL_PARAMETER[i];
+                string prefix = "" + ss.srcID;
 
                 prefix = ConvertToValidPrefix(prefix);
 
@@ -974,355 +1019,579 @@ public class VendorsDecoder : EditorWindow
                     {
                         int bracketStartIndex = perLineMatch.Index + perLineMatch.Value.Length;
 
-                        contentBetween = FindPairComment(bracketStartIndex, vendorsText, false);
+                        simpleSetSrcContent = FindPairComment(bracketStartIndex, vendorsText, false);
 
-                        if (!string.IsNullOrEmpty(contentBetween))
+                        if (!string.IsNullOrEmpty(simpleSetSrcContent))
                         {
+                            foreach (var data in NAME_TO_MANIFESTLIST[ss.name])
+                            {
+                                data.imgUrl = simpleSetSrcContent;
+
+                                data.imageType = ParameterType.URL;
+                            }
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(simpleSetSrcContent))
+                {
+                    matchPattern = prefix + ":function\\(" + firstFuncName + "\\)\\{\"use strict\";" + firstFuncName + ".exports=";
+
+                    foreach (Match perLineMatch in Regex.Matches(vendorsText, matchPattern))
+                    {
+                        int findColonIndex = matchPattern.IndexOf(':') - 1;
+
+                        string doubleCheckPrefix = GetStringBackward(vendorsText, perLineMatch.Index + findColonIndex, new char[] { ',', '{' });
+
+                        if (doubleCheckPrefix.Equals(prefix))
+                        {
+                            int bracketStartIndex = perLineMatch.Index + perLineMatch.Value.Length;
+
+                            simpleSetSrcContent = FindPairComment(bracketStartIndex, vendorsText, false);
+
+                            string trimPattern = "data:image/png;base64,";
+
+                            int trimIndex = simpleSetSrcContent.IndexOf(trimPattern);
+
+                            if (trimIndex >= 0)
+                            {
+                                trimIndex += trimPattern.Length;
+
+                                simpleSetSrcContent = simpleSetSrcContent.Substring(trimIndex);
+
+                                if (!string.IsNullOrEmpty(simpleSetSrcContent))
+                                {
+                                    foreach (var data in NAME_TO_MANIFESTLIST[ss.name])
+                                    {
+                                        data.imgUrl = simpleSetSrcContent;
+
+                                        data.imageType = ParameterType.Base64;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                prefix = "" + ss.atlasID;
+
+                string atlasMatchPattern = prefix + ":function\\(" + firstFuncName + "\\)\\{" + firstFuncName + ".exports=";
+
+                foreach (Match atlasPerLineMatch in Regex.Matches(vendorsText, atlasMatchPattern))
+                {
+                    string atlas = FindPairComment(atlasPerLineMatch.Index + atlasMatchPattern.Length - 3, vendorsText, false);
+
+                    atlas = atlas.Replace("\\n", "\n");
+
+                    atlas = atlas.Replace("\\t", "");
+
+                    foreach (var data in NAME_TO_MANIFESTLIST[ss.name])
+                    {
+                        data.atlasString = atlas;
+                    }
+                }
+
+
+
+
+
+
+
+                prefix = "" + ss.jsonID;
+
+                string jsonMatchPattern = prefix + ":function\\(" + firstFuncName + "\\)\\{\"use strict\";" + firstFuncName + ".exports=" + "JSON.parse\\(\'{\"skeleton\"";
+
+                foreach (Match jsonPerLineMatch in Regex.Matches(vendorsText, jsonMatchPattern))
+                {
+                    int startIndex = jsonPerLineMatch.Index + jsonMatchPattern.Length - 16;
+
+                    string json = FindJsonPairComment(startIndex, vendorsText, false);
+
+                    json = json.Replace("4.0-from-", "");
+
+                    json = json.Replace("4.1-from-", "");
+
+                    foreach (var data in NAME_TO_MANIFESTLIST[ss.name])
+                    {
+                        data.jsonString = json;
+                    }
+                }
+            }
+        }
+        else
+        {
+            #region Try Calc ALL PARAMETER OFFSET
+
+            int latestHitIndex = -1;
+
+            int latestManifestID = -1;
+
+            for (int i = 0; i < ALL_PARAMETER.Count; i++)
+            {
+                string sPrefix = ALL_PARAMETER[i];
+
+                string contentBetween = "";// FindPairComment(bracketStartIndex, vendorsText, false);
+
+                if (string.IsNullOrEmpty(contentBetween))
+                {
+                    if (INDEX_ID_TO_RESOURCE.ContainsKey(sPrefix))
+                    {
+                        string toCheck = INDEX_ID_TO_RESOURCE[sPrefix];
+
+                        if (toCheck.EndsWith(".png") || toCheck.EndsWith(".jpg") || toCheck.EndsWith(".jpeg"))
+                        {
+                            contentBetween = INDEX_ID_TO_RESOURCE[sPrefix];
+
+                            if (!ALREADY_USE_INDEX_RESOURCES.ContainsKey(sPrefix))
+                                ALREADY_USE_INDEX_RESOURCES.Add(sPrefix, "1");
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(contentBetween))
+                {
+                    if (VENDOR_ID_TO_RESOURCE.ContainsKey(sPrefix))
+                    {
+                        string toCheck = VENDOR_ID_TO_RESOURCE[sPrefix];
+
+                        if (toCheck.EndsWith(".png") || toCheck.EndsWith(".jpg") || toCheck.EndsWith(".jpeg"))
+                        {
+                            contentBetween = VENDOR_ID_TO_RESOURCE[sPrefix];
+
+                            if (!ALREADY_USE_VENDORS_RESOURCES.ContainsKey(sPrefix))
+                                ALREADY_USE_VENDORS_RESOURCES.Add(sPrefix, "1");
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(contentBetween))
+                {
+                    string prefix = "" + ALL_PARAMETER[i];
+
+                    prefix = ConvertToValidPrefix(prefix);
+
+                    string matchPattern = prefix + ":function\\(" + firstFuncName + "," + secondFuncName + "," + thirdFuncName + "\\)\\{\"use strict\";" + firstFuncName + ".exports=" + thirdFuncName + ".p\\+";
+
+                    foreach (Match perLineMatch in Regex.Matches(vendorsText, matchPattern))
+                    {
+                        int findColonIndex = matchPattern.IndexOf(':') - 1;
+
+                        string doubleCheckPrefix = GetStringBackward(vendorsText, perLineMatch.Index + findColonIndex, new char[] { ',', '{' });
+
+                        if (doubleCheckPrefix.Equals(prefix))
+                        {
+                            int bracketStartIndex = perLineMatch.Index + perLineMatch.Value.Length;
+
+                            contentBetween = FindPairComment(bracketStartIndex, vendorsText, false);
+
+                            if (!string.IsNullOrEmpty(contentBetween))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(contentBetween))
+                {
+                    string id_name = GetFileName(contentBetween);
+
+                    if (NAME_TO_MANIFESTLIST.ContainsKey(id_name))
+                    {
+                        latestHitIndex = i;
+
+                        if (NAME_TO_MANIFESTLIST[id_name][0].imageType == ParameterType.Base64 || NAME_TO_MANIFESTLIST[id_name][0].imageType == ParameterType.URL)
+                            continue;
+
+                        int relateManifestID = -1;
+
+                        // Find Hit Parameter. Manage All The Base64 Before
+                        foreach (var data in NAME_TO_MANIFESTLIST[id_name])
+                        {
+                            data.imgUrl = contentBetween;
+
+                            data.imageType = ParameterType.URL;
+
+                            data.relateAllParameterContent = ALL_PARAMETER[i];
+
+                            //Important
+
+                            data.relateAllParameterIndex = i;
+
+                            relateManifestID = data.manifestID;
+
+                            //Important
+                            latestManifestID = relateManifestID;
                             break;
+                        }
+
+                        int nextManifestID = latestManifestID - 1;
+
+                        for (int j = i - 1; j > 0; j--)
+                        {
+                            if (jsonManifestIDList.Contains(nextManifestID))
+                            {
+                                nextManifestID--;
+                            }
+
+                            if (MANIFEST_ID_TO_NAME.ContainsKey(nextManifestID))
+                            {
+                                if (MANIFEST_ID_TO_NAME[nextManifestID].imageType == ParameterType.URL)
+                                {
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                nextManifestID--;
+                                continue;
+                            }
+
+                            bool hasEncodeData = DecideBase64Case(ALL_PARAMETER, MANIFEST_ID_TO_NAME, j, nextManifestID, vendorsText, INDEX_ID_TO_RESOURCE, VENDOR_ID_TO_RESOURCE);
+
+                            nextManifestID--;
+                        }
+                    }
+                }
+
+                //if (hasCheck)
+                //    continue;
+            }
+
+            int followManifestID = latestHitIndex + 1;
+            // Avoid Following All Base 64 case
+            for (int i = (latestHitIndex + 1); i < ALL_PARAMETER.Count; i++)
+            {
+                if (jsonManifestIDList.Contains(followManifestID))
+                {
+                    followManifestID += 1;
+                }
+
+                DecideBase64Case(ALL_PARAMETER, MANIFEST_ID_TO_NAME, i, followManifestID, vendorsText, INDEX_ID_TO_RESOURCE, VENDOR_ID_TO_RESOURCE);
+
+                followManifestID += 1;
+            }
+
+            #endregion
+
+            #region Detect JSON ID
+
+            int lastSRCIndex = 0;
+
+            foreach (Match manifestMatch in manifestAtlasAndJsonCollect)
+            {
+                int bracketStartIndex = manifestMatch.Index + 10;
+
+                string contentBetween = FindPairBracket(bracketStartIndex, vendorsText, true);
+
+                string contentBetweenBigBracket = "\\{(.+?)\\}";
+
+                foreach (Match perLineMatch in Regex.Matches(contentBetween, contentBetweenBigBracket))
+                {
+                    string perLineMatchValue = perLineMatch.Value;
+
+                    string srcnPattern = "src:" + thirdFuncName;
+
+                    int SRC_N_Index = perLineMatchValue.IndexOf(srcnPattern);
+
+                    if (SRC_N_Index < 0)
+                    {
+                        //Get Atlas And Json
+                        if (perLineMatchValue.Contains("atlas") && perLineMatchValue.Contains("json"))
+                        {
+                            bool alreadyHasID = perLineMatchValue.Contains(":{");
+
+                            int startIndex = alreadyHasID ? (perLineMatch.Index + perLineMatchValue.IndexOf(":{")) - 1 : perLineMatch.Index - 2;
+                            startIndex += bracketStartIndex;
+
+                            string currentID = GetStringBackward(vendorsText, startIndex, new char[] { ',', '{' });
+
+                            if (NAME_TO_MANIFESTLIST.ContainsKey(currentID))
+                            {
+                                //int atlasID = GetNumberByTag(perLineMatchValue, "atlas");
+                                int jsonID = GetNumberByTag(perLineMatchValue, "json", thirdFuncName);
+
+                                int START_PARAM_ID = MANIFEST_ID_TO_NAME[lastSRCIndex].relateAllParameterIndex;
+
+                                int JSON_PARAMETER_INDEX = START_PARAM_ID + (jsonID - lastSRCIndex) / 2;
+
+                                if (JSON_PARAMETER_INDEX < ALL_PARAMETER.Count && JSON_PARAMETER_INDEX >= 0)
+                                {
+                                    string sJsonPrefix = ALL_PARAMETER[JSON_PARAMETER_INDEX];
+
+                                    string jsonContentBetween = "";
+
+                                    if (string.IsNullOrEmpty(jsonContentBetween))
+                                    {
+                                        if (INDEX_ID_TO_RESOURCE.ContainsKey(sJsonPrefix))
+                                        {
+                                            string toCheck = INDEX_ID_TO_RESOURCE[sJsonPrefix];
+                                            if (toCheck.EndsWith(".json"))
+                                            {
+                                                jsonContentBetween = INDEX_ID_TO_RESOURCE[sJsonPrefix];
+
+                                                if (!ALREADY_USE_INDEX_RESOURCES.ContainsKey(sJsonPrefix))
+                                                    ALREADY_USE_INDEX_RESOURCES.Add(sJsonPrefix, "1");
+                                            }
+                                        }
+                                    }
+
+                                    if (string.IsNullOrEmpty(jsonContentBetween))
+                                    {
+                                        if (VENDOR_ID_TO_RESOURCE.ContainsKey(sJsonPrefix))
+                                        {
+                                            string toCheck = VENDOR_ID_TO_RESOURCE[sJsonPrefix];
+                                            if (toCheck.EndsWith(".json"))
+                                            {
+                                                jsonContentBetween = VENDOR_ID_TO_RESOURCE[sJsonPrefix];
+
+                                                if (!ALREADY_USE_VENDORS_RESOURCES.ContainsKey(sJsonPrefix))
+                                                    ALREADY_USE_VENDORS_RESOURCES.Add(sJsonPrefix, "1");
+                                            }
+                                        }
+                                    }
+
+                                    if (string.IsNullOrEmpty(jsonContentBetween))
+                                    {
+                                        string jsonPrefix = "" + sJsonPrefix;
+
+                                        string jsonMatchPattern = jsonPrefix + ":function\\(" + firstFuncName + "," + secondFuncName + "," + thirdFuncName + "\\)\\{" + firstFuncName + ".exports=" + thirdFuncName + ".p\\+";
+
+                                        foreach (Match jsonPerLineMatch in Regex.Matches(vendorsText, jsonMatchPattern))
+                                        {
+                                            int findColonIndex = jsonMatchPattern.IndexOf(':') - 1;
+
+                                            string doubleCheckPrefix = GetStringBackward(vendorsText, perLineMatch.Index + findColonIndex, new char[] { ',', '{' });
+
+                                            if (doubleCheckPrefix.Equals(jsonPrefix))
+                                            {
+                                                int jsonBracketStartIndex = jsonPerLineMatch.Index + jsonPerLineMatch.Value.Length;
+
+                                                jsonContentBetween = FindPairComment(jsonBracketStartIndex, vendorsText, false);
+
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if (!string.IsNullOrEmpty(jsonContentBetween))
+                                    {
+                                        string jsonName = GetFileName(jsonContentBetween);
+
+                                        if (NAME_TO_MANIFESTLIST.ContainsKey(jsonName))
+                                        {
+                                            foreach (var data in NAME_TO_MANIFESTLIST[jsonName])
+                                            {
+                                                data.jsonUrl = jsonContentBetween;
+
+                                                break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            NetSpineData data = new NetSpineData();
+
+                                            data.jsonUrl = jsonContentBetween;
+
+                                            NAME_TO_MANIFESTLIST.Add(jsonName, new List<NetSpineData>() { data });
+
+                                            UnityEngine.Debug.Log("MISSING JSON " + jsonName);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        int Name_Index = perLineMatchValue.IndexOf("id:");
+
+                        if (Name_Index >= 0)
+                        {
+                            Name_Index += 3;
+
+                            string NAME_ID = FindPairComment(Name_Index, perLineMatchValue, false);
+
+                            if (NAME_TO_MANIFESTLIST.ContainsKey(NAME_ID))
+                            {
+                                lastSRCIndex = NAME_TO_MANIFESTLIST[NAME_ID][0].manifestID;
+                            }
                         }
                     }
                 }
             }
 
-            if (!string.IsNullOrEmpty(contentBetween))
+            #endregion
+
+            #region Detect ATLAS
+
+            List<string> atlasOrder = new List<string>();
+
+            string AtlasPattern = "(function\\(" + firstFuncName + "," + secondFuncName + "\\){" + firstFuncName + ".exports=[\"])(?:\"|.)*?[\"]";
+
+            foreach (Match match in Regex.Matches(vendorsText, AtlasPattern))
             {
-                string id_name = GetFileName(contentBetween);
+                #region analyse atlas
 
-                if (NAME_TO_MANIFESTLIST.ContainsKey(id_name))
+                string rawAtlasMatch = match.Value;
+
+                if (rawAtlasMatch.Contains(".png"))
                 {
-                    latestHitIndex = i;
+                    int imageIndex = rawAtlasMatch.IndexOf(".png");
 
-                    if (NAME_TO_MANIFESTLIST[id_name][0].imageType == ParameterType.Base64 || NAME_TO_MANIFESTLIST[id_name][0].imageType == ParameterType.URL)
-                        continue;
+                    int startIndex = rawAtlasMatch.IndexOf('"') + 1;
 
-                    int relateManifestID = -1;
+                    string bestMatchName = rawAtlasMatch.Substring(startIndex, imageIndex - startIndex);
 
-                    // Find Hit Parameter. Manage All The Base64 Before
-                    foreach (var data in NAME_TO_MANIFESTLIST[id_name])
+                    string imageName = rawAtlasMatch.Substring(startIndex, imageIndex + 4 - startIndex);
+
+                    imageName = GetFileName(imageName);
+
+                    string atlas = rawAtlasMatch.Substring(startIndex, rawAtlasMatch.Length - startIndex - 1);
+
+                    atlas = atlas.Replace("\\n", "\n");
+
+                    atlas = atlas.Replace("\\t", "");
+
+                    if (NAME_TO_MANIFESTLIST.ContainsKey(imageName))
                     {
-                        data.imgUrl = contentBetween;
+                        foreach (var data in NAME_TO_MANIFESTLIST[imageName])
+                        {
+                            data.atlasString = atlas;
 
-                        data.imageType = ParameterType.URL;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        NetSpineData data = new NetSpineData();
 
-                        data.relateAllParameterContent = ALL_PARAMETER[i];
+                        data.atlasString = atlas;
 
-                        //Important
+                        NAME_TO_MANIFESTLIST.Add(imageName, new List<NetSpineData>() { data });
 
-                        data.relateAllParameterIndex = i;
-
-                        relateManifestID = data.manifestID;
-
-                        //Important
-                        latestManifestID = relateManifestID;
-                        break;
+                        UnityEngine.Debug.Log("MISSING : Atlas " + imageName + "  has no relate resources.");
                     }
 
-                    int nextManifestID = latestManifestID - 1;
+                    atlasOrder.Add(imageName);
 
-                    for (int j = i - 1; j > 0; j--)
+                }
+                #endregion
+            }
+
+            if (atlasOrder.Count == 0)
+            {
+                string anotherAtlasPattern = "(function\\(" + firstFuncName + "\\){" + firstFuncName + ".exports=[\"])(?:\"|.)*?[\"]";
+
+                foreach (Match match in Regex.Matches(vendorsText, anotherAtlasPattern))
+                {
+                    #region analyse atlas
+
+                    string rawAtlasMatch = match.Value;
+
+                    if (rawAtlasMatch.Contains(".png"))
                     {
-                        if (jsonManifestIDList.Contains(nextManifestID))
-                        {
-                            nextManifestID--;
-                        }
+                        int imageIndex = rawAtlasMatch.IndexOf(".png");
 
-                        if (MANIFEST_ID_TO_NAME.ContainsKey(nextManifestID))
+                        int startIndex = rawAtlasMatch.IndexOf('"') + 1;
+
+                        string bestMatchName = rawAtlasMatch.Substring(startIndex, imageIndex - startIndex);
+
+                        string imageName = rawAtlasMatch.Substring(startIndex, imageIndex + 4 - startIndex);
+
+                        imageName = GetFileName(imageName);
+
+                        string atlas = rawAtlasMatch.Substring(startIndex, rawAtlasMatch.Length - startIndex - 1);
+
+                        atlas = atlas.Replace("\\n", "\n");
+
+                        atlas = atlas.Replace("\\t", "");
+
+                        if (NAME_TO_MANIFESTLIST.ContainsKey(imageName))
                         {
-                            if (MANIFEST_ID_TO_NAME[nextManifestID].imageType == ParameterType.URL)
+                            foreach (var data in NAME_TO_MANIFESTLIST[imageName])
                             {
+                                data.atlasString = atlas;
+
                                 break;
                             }
                         }
                         else
                         {
-                            nextManifestID--;
-                            continue;
+                            NetSpineData data = new NetSpineData();
+
+                            data.atlasString = atlas;
+
+                            NAME_TO_MANIFESTLIST.Add(imageName, new List<NetSpineData>() { data });
+
+                            UnityEngine.Debug.Log("MISSING : Atlas " + imageName + "  has no relate resources.");
                         }
 
-                        bool hasEncodeData = DecideBase64Case(ALL_PARAMETER, MANIFEST_ID_TO_NAME, j, nextManifestID, vendorsText, INDEX_ID_TO_RESOURCE, VENDOR_ID_TO_RESOURCE);
+                        atlasOrder.Add(imageName);
 
-                        nextManifestID--;
                     }
+                    #endregion
                 }
             }
 
-            //if (hasCheck)
-            //    continue;
-        }
+            bool needToAssignJson = false;
 
-        int followManifestID = latestHitIndex + 1;
-        // Avoid Following All Base 64 case
-        for (int i = (latestHitIndex + 1); i < ALL_PARAMETER.Count; i++)
-        {
-            if (jsonManifestIDList.Contains(followManifestID))
+            foreach (var s in atlasOrder)
             {
-                followManifestID += 1;
+                string jsonURL = NAME_TO_MANIFESTLIST[s][0].jsonUrl;
+
+                string jsonString = NAME_TO_MANIFESTLIST[s][0].jsonString;
+
+                if (string.IsNullOrEmpty(jsonURL) && string.IsNullOrEmpty(jsonString))
+                {
+                    needToAssignJson = true;
+
+                    UnityEngine.Debug.Log("Need To Assign Json " + needToAssignJson);
+
+                    break;
+                }
             }
 
-            DecideBase64Case(ALL_PARAMETER, MANIFEST_ID_TO_NAME, i, followManifestID, vendorsText, INDEX_ID_TO_RESOURCE, VENDOR_ID_TO_RESOURCE);
-
-            followManifestID += 1;
-        }
-
-        #endregion
-
-        /*foreach(var pair in MANIFEST_ID_TO_NAME)
-        {
-            if(pair.Value.imageType != ParameterType.NoImage)
-                UnityEngine.Debug.Log(pair.Key + " : " + pair.Value.imgUrl + " : " + pair.Value.manifestName);
-        }*/
-
-        //return;
-        #region Detect JSON ID
-
-        int lastSRCIndex = 0;
-
-        foreach (Match manifestMatch in manifestCollect)
-        {
-            int bracketStartIndex = manifestMatch.Index + 10;
-
-            string contentBetween = FindPairBracket(bracketStartIndex, vendorsText, true);
-
-            string contentBetweenBigBracket = "\\{(.+?)\\}";
-
-            foreach (Match perLineMatch in Regex.Matches(contentBetween, contentBetweenBigBracket))
+            if (needToAssignJson)
             {
-                string perLineMatchValue = perLineMatch.Value;
+                string JsonPattern = "JSON.parse\\(\'{\"skeleton\"";
 
-                string srcnPattern = "src:" + thirdFuncName;
+                var JSONMatch = Regex.Matches(vendorsText, JsonPattern);
 
-                int SRC_N_Index = perLineMatchValue.IndexOf(srcnPattern);
-
-                if (SRC_N_Index < 0)
+                for (int i = 0; i < JSONMatch.Count; i++)
                 {
-                    //Get Atlas And Json
-                    if (perLineMatchValue.Contains("atlas") && perLineMatchValue.Contains("json"))
+                    Match jsonM = JSONMatch[i];
+
+                    int startIndex = jsonM.Index + 11;
+
+                    string json = FindJsonPairComment(startIndex, vendorsText, false);
+
+                    json = json.Replace("4.0-from-", "");
+
+                    json = json.Replace("4.1-from-", "");
+
+                    if (i < atlasOrder.Count)
                     {
-                        bool alreadyHasID = perLineMatchValue.Contains(":{");
+                        string s = atlasOrder[i];
 
-                        int startIndex = alreadyHasID ? (perLineMatch.Index + perLineMatchValue.IndexOf(":{")) - 1 : perLineMatch.Index - 2;
-                        startIndex += bracketStartIndex;
-
-                        string currentID = GetStringBackward(vendorsText, startIndex, new char[] { ',', '{' });
-
-                        if (NAME_TO_MANIFESTLIST.ContainsKey(currentID))
-                        {
-                            //int atlasID = GetNumberByTag(perLineMatchValue, "atlas");
-                            int jsonID = GetNumberByTag(perLineMatchValue, "json");
-
-                            int START_PARAM_ID = MANIFEST_ID_TO_NAME[lastSRCIndex].relateAllParameterIndex;
-
-                            int JSON_PARAMETER_INDEX = START_PARAM_ID + (jsonID - lastSRCIndex) / 2;
-
-                            if (JSON_PARAMETER_INDEX < ALL_PARAMETER.Count && JSON_PARAMETER_INDEX >= 0)
-                            {
-                                string sJsonPrefix = ALL_PARAMETER[JSON_PARAMETER_INDEX];
-
-                                string jsonContentBetween = "";
-
-                                if (string.IsNullOrEmpty(jsonContentBetween))
-                                {
-                                    if (INDEX_ID_TO_RESOURCE.ContainsKey(sJsonPrefix))
-                                    {
-                                        string toCheck = INDEX_ID_TO_RESOURCE[sJsonPrefix];
-                                        if (toCheck.EndsWith(".json"))
-                                        {
-                                            jsonContentBetween = INDEX_ID_TO_RESOURCE[sJsonPrefix];
-
-                                            if (!ALREADY_USE_INDEX_RESOURCES.ContainsKey(sJsonPrefix))
-                                                ALREADY_USE_INDEX_RESOURCES.Add(sJsonPrefix, "1");
-                                        }
-                                    }
-                                }
-
-                                if (string.IsNullOrEmpty(jsonContentBetween))
-                                {
-                                    if (VENDOR_ID_TO_RESOURCE.ContainsKey(sJsonPrefix))
-                                    {
-                                        string toCheck = VENDOR_ID_TO_RESOURCE[sJsonPrefix];
-                                        if (toCheck.EndsWith(".json"))
-                                        {
-                                            jsonContentBetween = VENDOR_ID_TO_RESOURCE[sJsonPrefix];
-
-                                            if(!ALREADY_USE_VENDORS_RESOURCES.ContainsKey(sJsonPrefix))
-                                                ALREADY_USE_VENDORS_RESOURCES.Add(sJsonPrefix, "1");
-                                        }
-                                    }
-                                }
-
-                                if (string.IsNullOrEmpty(jsonContentBetween))
-                                {
-                                    string jsonPrefix = "" + sJsonPrefix;
-
-                                    string jsonMatchPattern = jsonPrefix + ":function\\(" + firstFuncName + "," + secondFuncName + "," + thirdFuncName + "\\)\\{" + firstFuncName + ".exports=" + thirdFuncName + ".p\\+";
-
-                                    foreach (Match jsonPerLineMatch in Regex.Matches(vendorsText, jsonMatchPattern))
-                                    {
-                                        int findColonIndex = jsonMatchPattern.IndexOf(':') - 1;
-
-                                        string doubleCheckPrefix = GetStringBackward(vendorsText, perLineMatch.Index + findColonIndex, new char[] { ',', '{' });
-
-                                        if (doubleCheckPrefix.Equals(jsonPrefix))
-                                        {
-                                            int jsonBracketStartIndex = jsonPerLineMatch.Index + jsonPerLineMatch.Value.Length;
-
-                                            jsonContentBetween = FindPairComment(jsonBracketStartIndex, vendorsText, false);
-
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (!string.IsNullOrEmpty(jsonContentBetween))
-                                {
-                                    string jsonName = GetFileName(jsonContentBetween);
-
-                                    if (NAME_TO_MANIFESTLIST.ContainsKey(jsonName))
-                                    {
-                                        foreach (var data in NAME_TO_MANIFESTLIST[jsonName])
-                                        {
-                                            data.jsonUrl = jsonContentBetween;
-
-                                            break;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        NetSpineData data = new NetSpineData();
-
-                                        data.jsonUrl = jsonContentBetween;
-
-                                        NAME_TO_MANIFESTLIST.Add(jsonName, new List<NetSpineData>() { data });
-
-                                        UnityEngine.Debug.Log("MISSING JSON " + jsonName);
-                                    }
-                                }
-                            }
-                        }
+                        NAME_TO_MANIFESTLIST[s][0].jsonString = json;
                     }
                 }
-                else
-                {
-                    int Name_Index = perLineMatchValue.IndexOf("id:");
-
-                    if (Name_Index >= 0)
-                    {
-                        Name_Index += 3;
-
-                        string NAME_ID = FindPairComment(Name_Index, perLineMatchValue, false);
-
-                        if (NAME_TO_MANIFESTLIST.ContainsKey(NAME_ID))
-                        {
-                            lastSRCIndex = NAME_TO_MANIFESTLIST[NAME_ID][0].manifestID;
-                        }
-                    }
-                }
-            }
-        }
-
-        #endregion
-
-        #region Detect ATLAS
-
-        List<string> atlasOrder = new List<string>();
-
-        string AtlasPattern = "(function\\(" + firstFuncName + "," + secondFuncName + "\\){" + firstFuncName + ".exports=[\"])(?:\"|.)*?[\"]";
-
-        foreach (Match match in Regex.Matches(vendorsText, AtlasPattern))
-        {
-            #region analyse atlas
-
-            string rawAtlasMatch = match.Value;
-
-            if (rawAtlasMatch.Contains(".png"))
-            {
-                int imageIndex = rawAtlasMatch.IndexOf(".png");
-
-                int startIndex = rawAtlasMatch.IndexOf('"') + 1;
-
-                string bestMatchName = rawAtlasMatch.Substring(startIndex, imageIndex - startIndex);
-
-                string imageName = rawAtlasMatch.Substring(startIndex, imageIndex + 4 - startIndex);
-
-                imageName = GetFileName(imageName);
-
-                string atlas = rawAtlasMatch.Substring(startIndex, rawAtlasMatch.Length - startIndex - 1);
-
-                atlas = atlas.Replace("\\n", "\n");
-
-                atlas = atlas.Replace("\\t", "");
-
-                if (NAME_TO_MANIFESTLIST.ContainsKey(imageName))
-                {
-                    foreach (var data in NAME_TO_MANIFESTLIST[imageName])
-                    {
-                        data.atlasString = atlas;
-
-                        break;
-                    }
-                }
-                else
-                {
-                    NetSpineData data = new NetSpineData();
-
-                    data.atlasString = atlas;
-
-                    NAME_TO_MANIFESTLIST.Add(imageName, new List<NetSpineData>() { data });
-
-                    UnityEngine.Debug.Log("MISSING : Atlas " + imageName + "  has no relate resources.");
-                }
-
-                atlasOrder.Add(imageName);
-
             }
             #endregion
         }
 
-        bool needToAssignJson = false;
-
-        foreach (var s in atlasOrder)
+        /*for(int i = 0; i < ALL_PARAMETER.Count; i++)
         {
-            string jsonURL = NAME_TO_MANIFESTLIST[s][0].jsonUrl;
+            UnityEngine.Debug.Log("ALL" + ALL_PARAMETER[i]);
+        }*/
 
-            string jsonString = NAME_TO_MANIFESTLIST[s][0].jsonString;
-
-            if (string.IsNullOrEmpty(jsonURL) && string.IsNullOrEmpty(jsonString))
-            {
-                needToAssignJson = true;
-
-                UnityEngine.Debug.Log("Need To Assign Json " + needToAssignJson);
-
-                break;
-            }
-        }
-
-        if (needToAssignJson)
+        /*foreach(var pair in MANIFEST_ID_TO_NAME)
         {
-            string JsonPattern = "JSON.parse\\(\'{\"skeleton\"";
+            UnityEngine.Debug.Log("AA " + pair.Key + " " + pair.Value);
+        }*/
 
-            var JSONMatch = Regex.Matches(vendorsText, JsonPattern);
 
-            for (int i = 0; i < JSONMatch.Count; i++)
-            {
-                Match jsonM = JSONMatch[i];
-
-                int startIndex = jsonM.Index + 11;
-
-                string json = FindJsonPairComment(startIndex, vendorsText, false);
-
-                json = json.Replace("4.0-from-", "");
-
-                json = json.Replace("4.1-from-", "");
-
-                if (i < atlasOrder.Count)
-                {
-                    string s = atlasOrder[i];
-
-                    NAME_TO_MANIFESTLIST[s][0].jsonString = json;
-                }
-            }
-        }
-        #endregion
 
         //// -------------------------  END MANIFEST STYLE WEBSITE  -------------------------------
 
@@ -1330,7 +1599,7 @@ public class VendorsDecoder : EditorWindow
 
         #region Ddtect Object Assign WebSite
 
-        if(MANIFEST_ID_TO_NAME.Count == 0)
+        if (MANIFEST_ID_TO_NAME.Count == 0)
         {
             // Oh no manifest decode failed
 
@@ -1542,6 +1811,10 @@ public class VendorsDecoder : EditorWindow
         }
         #endregion
         //// -------------------------  END OBJECT ASSIGN WEBSITE  -------------------------------
+
+        #region Check If Fallback To Index Decode Or Not
+
+        #endregion
         watch.Stop();
 
         UnityEngine.Debug.Log("Decode Duration is " + (watch.Elapsed));
@@ -1956,9 +2229,15 @@ public class VendorsDecoder : EditorWindow
         if (!Directory.Exists(geometrySaveFolder))
         {
             Directory.CreateDirectory(geometrySaveFolder);
+        
+        
         }
 
-        string geometryPattern = firstFuncName + ".exports=JSON.parse\\(\'";
+        string jsonFuncPrefix = decodeIndexJSInstead ? indexFirstFuncName : firstFuncName;
+
+        string jsonTextToSearch = decodeIndexJSInstead ? indexText : vendorsText;
+
+        string geometryPattern = jsonFuncPrefix + ".exports=JSON.parse\\(\'";
 
         int geoIndex = 0;
 
@@ -1966,11 +2245,11 @@ public class VendorsDecoder : EditorWindow
 
         bool findGeometry = false;
 
-        foreach (Match geoMatch in Regex.Matches(vendorsText, geometryPattern))
+        foreach (Match geoMatch in Regex.Matches(jsonTextToSearch, geometryPattern))
         {
             int startIndex = geoMatch.Index + 21;
 
-            string jsonContent = FindPairComment(startIndex, vendorsText, false);
+            string jsonContent = FindPairComment(startIndex, jsonTextToSearch, false);
 
             if (jsonContent.Contains("\"geometries\""))
             {
@@ -2007,17 +2286,17 @@ public class VendorsDecoder : EditorWindow
         {
             string anotherGeoPattern = "geometries:\\{";
 
-            foreach (Match geoMatch in Regex.Matches(vendorsText, anotherGeoPattern))
+            foreach (Match geoMatch in Regex.Matches(jsonTextToSearch, anotherGeoPattern))
             {
                 int jsonStartIndex = geoMatch.Index + 11;
 
-                string jsonContent = FindPairBracket(jsonStartIndex, vendorsText, false);
+                string jsonContent = FindPairBracket(jsonStartIndex, jsonTextToSearch, false);
 
                 if (!string.IsNullOrEmpty(jsonContent))
                 {
                     int fullJsonStartIndex = geoMatch.Index - 1;
 
-                    string fullJson = FindPairBracket(fullJsonStartIndex, vendorsText, true);
+                    string fullJson = FindPairBracket(fullJsonStartIndex, jsonTextToSearch, true);
 
                     string suffix = geoIndex == 0 ? "" : ("" + geoIndex);
 
@@ -2300,7 +2579,7 @@ public class VendorsDecoder : EditorWindow
 
         UnityEngine.Debug.Log("Finish Reading Vendors! Enjoy!");
 
-        return;
+        return true;
     }
 
     static string FindJsonPairComment(int startIndex, string origin, bool withBracket)
@@ -2685,9 +2964,9 @@ public class VendorsDecoder : EditorWindow
         return new string(charArray);
     }
 
-    public static int GetNumberByTag(string origin, string tagName)
+    public static int GetNumberByTag(string origin, string tagName, string funcname)
     {
-        string pattern = "(?:" + tagName + "\\:n)\\([0-9]*\\)";
+        string pattern = "(?:" + tagName + "\\:" + funcname + ")\\([0-9]*\\)";
 
         foreach (Match match in Regex.Matches(origin, pattern))
         {
