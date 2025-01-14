@@ -516,7 +516,7 @@ public class VendorsDecoder : EditorWindow
 
         vendorsText = vendorsText.Trim();
 
-        if (isSwapTry)
+        if (isSwapTry && File.Exists(indexFileLocalPath))
         {
             string swapText = File.ReadAllText(indexFileLocalPath, Encoding.UTF8);
 
@@ -973,6 +973,11 @@ public class VendorsDecoder : EditorWindow
 
                     SimpleSet ss = new SimpleSet();
 
+                    if (atlasRelateSrcName.Contains('"'))
+                    {
+                        atlasRelateSrcName = atlasRelateSrcName.Replace("\"", "");
+                    }
+
                     ss.name = atlasRelateSrcName;
 
                     ss.atlasID = atlasID;
@@ -983,6 +988,8 @@ public class VendorsDecoder : EditorWindow
                     {
                         ss.srcID = NAME_TO_MANIFESTLIST[atlasRelateSrcName][0].manifestID;
                     }
+
+                    //UnityEngine.Debug.Log("Simple Set " + ss.name + " , " + ss.srcID + " , " + ss.atlasID + " , " + ss.jsonID);
 
                     simpleSetList.Add(ss);
                 }
@@ -999,7 +1006,86 @@ public class VendorsDecoder : EditorWindow
 
         if(ALL_PARAMETER.Count * 1.0f < (MANIFEST_ID_TO_NAME.Count * 1.0f / 3.0f))
         {
-            foreach(var ss in simpleSetList)
+            string simpleSetFirstFunc = "";
+
+            string simpleSetSecondFunc = "";
+
+            string simpleSetThirdFunc = "";
+
+            Dictionary<string, int> simpleSetFirstNameCount = new Dictionary<string, int>();
+
+            Dictionary<string, int> simpleSetSecondNameCount = new Dictionary<string, int>();
+
+            Dictionary<string, int> simpleSetThirdNameCount = new Dictionary<string, int>();
+
+            foreach (var ss in simpleSetList)
+            {
+                string prefix = "" + ss.srcID + ":";
+
+                string perFindFuncPattern = prefix + findFuncPattern;
+
+                foreach (Match funcPattern in Regex.Matches(vendorsText, perFindFuncPattern))
+                {
+                    int funcStartIndex = funcPattern.Index + 8 + prefix.Length;
+
+                    string contentInBracket = FindPairBracket(funcStartIndex, vendorsText, false);
+
+                    string[] contentInBracketSplit = contentInBracket.Split(',');
+
+                    if (contentInBracketSplit.Length > 0)
+                    {
+                        string functionName1 = contentInBracketSplit[0];
+
+                        if (simpleSetFirstNameCount.ContainsKey(functionName1))
+                        {
+                            simpleSetFirstNameCount[functionName1] = simpleSetFirstNameCount[functionName1] + 1;
+                        }
+                        else
+                        {
+                            simpleSetFirstNameCount.Add(functionName1, 1);
+                        }
+                    }
+
+                    if (contentInBracketSplit.Length > 1)
+                    {
+                        string functionName2 = contentInBracketSplit[1];
+
+                        if (simpleSetSecondNameCount.ContainsKey(functionName2))
+                        {
+                            simpleSetSecondNameCount[functionName2] = simpleSetSecondNameCount[functionName2] + 1;
+                        }
+                        else
+                        {
+                            simpleSetSecondNameCount.Add(functionName2, 1);
+                        }
+                    }
+
+                    if (contentInBracketSplit.Length > 2)
+                    {
+                        string functionName3 = contentInBracketSplit[2];
+
+                        if (simpleSetThirdNameCount.ContainsKey(functionName3))
+                        {
+                            simpleSetThirdNameCount[functionName3] = simpleSetThirdNameCount[functionName3] + 1;
+                        }
+                        else
+                        {
+                            simpleSetThirdNameCount.Add(functionName3, 1);
+                        }
+                    }
+                }
+
+            }
+
+
+            simpleSetFirstFunc = FindMostPopString(simpleSetFirstNameCount);
+
+            simpleSetSecondFunc = FindMostPopString(simpleSetSecondNameCount);
+
+            simpleSetThirdFunc = FindMostPopString(simpleSetThirdNameCount);
+
+
+            foreach (var ss in simpleSetList)
             {
                 string simpleSetSrcContent = "";
 
@@ -1007,7 +1093,7 @@ public class VendorsDecoder : EditorWindow
 
                 prefix = ConvertToValidPrefix(prefix);
 
-                string matchPattern = prefix + ":function\\(" + firstFuncName + "," + secondFuncName + "," + thirdFuncName + "\\)\\{\"use strict\";" + firstFuncName + ".exports=" + thirdFuncName + ".p\\+";
+                string matchPattern = prefix + ":function\\(" + simpleSetFirstFunc + "," + simpleSetSecondFunc + "," + simpleSetThirdFunc + "\\)\\{\"use strict\";" + simpleSetFirstFunc + ".exports=" + simpleSetThirdFunc + ".p\\+";
 
                 foreach (Match perLineMatch in Regex.Matches(vendorsText, matchPattern))
                 {
@@ -1035,7 +1121,7 @@ public class VendorsDecoder : EditorWindow
 
                 if (string.IsNullOrEmpty(simpleSetSrcContent))
                 {
-                    matchPattern = prefix + ":function\\(" + firstFuncName + "\\)\\{\"use strict\";" + firstFuncName + ".exports=";
+                    matchPattern = prefix + ":function\\(" + simpleSetFirstFunc + "\\)\\{\"use strict\";" + simpleSetFirstFunc + ".exports=";
 
                     foreach (Match perLineMatch in Regex.Matches(vendorsText, matchPattern))
                     {
@@ -1075,7 +1161,7 @@ public class VendorsDecoder : EditorWindow
 
                 prefix = "" + ss.atlasID;
 
-                string atlasMatchPattern = prefix + ":function\\(" + firstFuncName + "\\)\\{" + firstFuncName + ".exports=";
+                string atlasMatchPattern = prefix + ":function\\(" + simpleSetFirstFunc + "\\)\\{" + simpleSetFirstFunc + ".exports=";
 
                 foreach (Match atlasPerLineMatch in Regex.Matches(vendorsText, atlasMatchPattern))
                 {
@@ -1091,15 +1177,9 @@ public class VendorsDecoder : EditorWindow
                     }
                 }
 
-
-
-
-
-
-
                 prefix = "" + ss.jsonID;
 
-                string jsonMatchPattern = prefix + ":function\\(" + firstFuncName + "\\)\\{\"use strict\";" + firstFuncName + ".exports=" + "JSON.parse\\(\'{\"skeleton\"";
+                string jsonMatchPattern = prefix + ":function\\(" + simpleSetFirstFunc + "\\)\\{\"use strict\";" + simpleSetFirstFunc + ".exports=" + "JSON.parse\\(\'{\"skeleton\"";
 
                 foreach (Match jsonPerLineMatch in Regex.Matches(vendorsText, jsonMatchPattern))
                 {
@@ -1116,6 +1196,13 @@ public class VendorsDecoder : EditorWindow
                         data.jsonString = json;
                     }
                 }
+
+                /*foreach (var data in NAME_TO_MANIFESTLIST.Keys)
+                {
+                    NetSpineData spineSet = NAME_TO_MANIFESTLIST[data][0];
+
+                    UnityEngine.Debug.Log("Spine Set " + spineSet.imgUrl + " , " + spineSet.atlasString);
+                }*/
             }
         }
         else
@@ -1597,7 +1684,7 @@ public class VendorsDecoder : EditorWindow
 
         //// -------------------------  START OBJECT ASSIGN WEBSITE  -------------------------------
 
-        #region Ddtect Object Assign WebSite
+        #region Detect Object Assign WebSite
 
         if (MANIFEST_ID_TO_NAME.Count == 0)
         {
@@ -1819,7 +1906,7 @@ public class VendorsDecoder : EditorWindow
 
         UnityEngine.Debug.Log("Decode Duration is " + (watch.Elapsed));
 
-        #region Downloadoad Resources
+        #region Download Resources
         Dictionary<string, string> nameToStoragePath = new Dictionary<string, string>();
 
         bool DownloadMode = true;
